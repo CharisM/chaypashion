@@ -20,7 +20,7 @@ export default function Home() {
 
       {/* NAVBAR */}
       <nav className="flex justify-between items-center px-12 py-4 bg-white">
-        <h1 className="text-3xl font-serif italic">Chay Fassion</h1>
+        <h1 className="text-3xl font-serif italic">Chay Fashion</h1>
 
         <ul className="flex gap-8 text-sm font-medium items-center">
           <li><Link href="/home">HOME</Link></li>
