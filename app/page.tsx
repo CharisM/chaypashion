@@ -4,14 +4,14 @@ import Link from "next/link";
 import { FiSearch } from "react-icons/fi";
 
 const products = [
-  { id: 1, img: "/dress1.jpg" },
-  { id: 2, img: "/dress2.jpg" },
-  { id: 3, img: "/dress3.jpg" },
-  { id: 4, img: "/dress4.jpg" },
-  { id: 5, img: "/dress5.jpg" },
-  { id: 6, img: "/dress6.jpg" },
-  { id: 7, img: "/dress7.jpg" },
-  { id: 8, img: "/dress8.jpg" },
+  { id: 1, img: "/image1.jpg" },
+  { id: 2, img: "/image2.jpg" },
+  { id: 3, img: "/image3.jpg" },
+  { id: 4, img: "/image4.jpg" },
+  { id: 5, img: "/image5.jpg" },
+  { id: 6, img: "/image6.jpg" },
+  { id: 7, img: "/image7.jpg" },
+  { id: 8, img: "/image8.jpg" },
 ];
 
 export default function Home() {
@@ -20,7 +20,7 @@ export default function Home() {
 
       {/* NAVBAR */}
       <nav className="flex justify-between items-center px-12 py-4 bg-white">
-        <h1 className="text-3xl font-serif italic">Chay Passion</h1>
+        <h1 className="text-3xl font-serif italic">Chay Fassion</h1>
 
         <ul className="flex gap-8 text-sm font-medium items-center">
           <li><Link href="/home">HOME</Link></li>
@@ -77,14 +77,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* FEATURES (small icons section) */}
-      <div className="flex justify-around text-sm py-6 bg-white border-t">
-        <p>🚚 Free Shipping</p>
-        <p>💬 Support 24/7</p>
-        <p>🔄 30 Days Return</p>
-        <p>🔒 100% Payment Secure</p>
-      </div>
-
       {/* FOOTER */}
       <footer className="bg-white text-gray-700 px-16 py-12 border-t">
         <div className="grid grid-cols-4 gap-10 text-sm">
@@ -98,15 +90,7 @@ export default function Home() {
             </ul>
           </div>
 
-          <div>
-            <h3 className="font-semibold mb-3">HELP</h3>
-            <ul className="space-y-2">
-              <li>Tracking</li>
-              <li>Order Status</li>
-              <li>Shipping</li>
-              <li>FAQ</li>
-            </ul>
-          </div>
+         
 
           <div>
             <h3 className="font-semibold mb-3">MORE</h3>
