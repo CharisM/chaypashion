@@ -23,7 +23,7 @@ export default function Home() {
         <h1 className="text-3xl font-serif italic">Chay Fashion</h1>
 
         <ul className="flex gap-8 text-sm font-medium items-center">
-          <li><Link href="/home">HOME</Link></li>
+          <li className="text-blue-600"><Link href="/">HOME</Link></li>
           <li><Link href="/about">ABOUT</Link></li>
           <li><Link href="/contact">CONTACT US</Link></li>
           <li>
@@ -47,7 +47,6 @@ export default function Home() {
               THE HEAT
             </h1>
 
-            {/* LOGIN REQUIRED */}
             <Link href="/login">
               <button className="mt-8 border-2 border-white px-6 py-2 hover:bg-white hover:text-black transition">
                 SHOP NOW
@@ -89,8 +88,6 @@ export default function Home() {
               <li>Contact</li>
             </ul>
           </div>
-
-         
 
           <div>
             <h3 className="font-semibold mb-3">MORE</h3>
