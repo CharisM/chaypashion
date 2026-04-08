@@ -6,15 +6,19 @@ export default function About() {
     <div className="flex flex-col min-h-screen bg-gray-50">
 
       {/* NAVBAR */}
-        <nav className="flex justify-between items-center px-12 py-4 bg-white shadow">
+      <nav className="flex justify-between items-center px-12 py-4 bg-white shadow">
         <h1 className="text-3xl font-serif italic">Chay Fashion</h1>
         <ul className="flex gap-8 text-sm font-medium items-center">
-            <li><Link href="/">HOME</Link></li>
-            <li className="text-blue-600 ">ABOUT</li>
-            <li><Link href="/contact">CONTACT US</Link></li>
-            <li><FiSearch className="text-lg" /></li>
+          <li><Link href="/">HOME</Link></li>
+          <li className="text-blue-600">ABOUT</li>
+          <li><Link href="/contact">CONTACT US</Link></li>
+          <li>
+            <Link href="/search">
+                <FiSearch className="text-lg cursor-pointer" />
+            </Link>
+            </li>
         </ul>
-        </nav>
+      </nav>
 
       {/* BANNER */}
       <div className="relative w-full h-60 md:h-72 lg:h-80">
@@ -29,6 +33,7 @@ export default function About() {
           </h1>
         </div>
       </div>
+
 
       {/* ABOUT CONTENT */}
       <div className="flex flex-col md:flex-row justify-center items-start max-w-6xl mx-auto my-8 px-5 gap-8">

@@ -8,15 +8,19 @@ export default function Contact() {
     <div className="flex flex-col min-h-screen bg-gray-50">
 
       {/* NAVBAR */}
-        <nav className="flex justify-between items-center px-12 py-4 bg-white shadow">
+      <nav className="flex justify-between items-center px-12 py-4 bg-white shadow">
         <h1 className="text-3xl font-serif italic">Chay Fashion</h1>
         <ul className="flex gap-8 text-sm font-medium items-center">
-            <li><Link href="/">HOME</Link></li>
-            <li><Link href="/about">ABOUT</Link></li>
-            <li className="text-blue-600 ">CONTACT US</li>
-            <li><FiSearch className="text-lg" /></li>
+          <li><Link href="/">HOME</Link></li>
+          <li><Link href="/about">ABOUT</Link></li>
+          <li className="text-blue-600">CONTACT US</li>
+          <li>
+            <Link href="/search">
+                <FiSearch className="text-lg cursor-pointer" />
+            </Link>
+          </li>
         </ul>
-        </nav>
+      </nav>
 
       {/* BANNER IMAGE */}
       <div className="relative w-full h-64 md:h-72 lg:h-80">
