@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FiMail, FiLock } from "react-icons/fi";
+import { supabase } from "@/lib/supabase";
 
 export default function Login() {
   const router = useRouter();
@@ -11,16 +12,16 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleLogin = () => {
-    const user = JSON.parse(localStorage.getItem("user") || "null");
+  const handleLogin = async () => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
 
-    if (user && user.email === email && user.password === password) {
-      localStorage.setItem("isLoggedIn", "true");
-      alert("Login successful!");
-      router.push("/");
-    } else {
-      alert("Invalid credentials!");
+    if (error) {
+      alert(error.message);
+      return;
     }
+
+    alert("Login successful!");
+    router.push("/");
   };
 
   return (

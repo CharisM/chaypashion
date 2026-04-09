@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FiMail, FiLock, FiUser, FiPhone, FiMapPin, FiEye, FiEyeOff } from "react-icons/fi";
+import { supabase } from "@/lib/supabase";
 
 export default function Signup() {
   const router = useRouter();
@@ -17,15 +18,28 @@ export default function Signup() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
-  const handleSignup = () => {
+  const handleSignup = async () => {
     if (password !== confirmPassword) {
       alert("Passwords do not match!");
       return;
     }
 
-    const user = { username, email, number, location, password };
-    localStorage.setItem("user", JSON.stringify(user));
-    alert("Account created!");
+    const { data, error } = await supabase.auth.signUp({ email, password });
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    if (data.user) {
+      await supabase.from("profiles").insert({
+        id: data.user.id,
+        username,
+        phone: number,
+      });
+    }
+
+    alert("Account created! Please check your email to confirm.");
     router.push("/login");
   };
 
