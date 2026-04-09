@@ -81,39 +81,26 @@ export default function Signup() {
 
        
         {/* PASSWORD */}
-        <div className="flex items-center border-b border-white/50 mb-3 py-2 px-3 focus-within:border-white/80 transition rounded-md bg-white/20 backdrop-blur-md relative">
+        <div className="flex items-center border-b border-white/50 mb-3 py-2 px-3 focus-within:border-white/80 transition rounded-md bg-white/20 backdrop-blur-md">
           <FiLock className="text-black-200 mr-2 text-lg" />
           <input
-            type={showPassword ? "text" : "password"}
+            type="password"
             placeholder="Password"
             className="w-full outline-none bg-transparent text-black placeholder-black-300"
             onChange={(e) => setPassword(e.target.value)}
           />
-          <span
-            className="absolute right-3 cursor-pointer text-gray-200"
-            onClick={() => setShowPassword(!showPassword)}
-          >
-            {showPassword ? <FiEyeOff /> : <FiEye />}
-          </span>
         </div>
 
         {/* CONFIRM PASSWORD */}
-        <div className="flex items-center border-b border-white/50 mb-5 py-2 px-3 focus-within:border-white/80 transition rounded-md bg-white/20 backdrop-blur-md relative">
+        <div className="flex items-center border-b border-white/50 mb-5 py-2 px-3 focus-within:border-white/80 transition rounded-md bg-white/20 backdrop-blur-md">
           <FiLock className="text-black-200 mr-2 text-lg" />
           <input
-            type={showConfirm ? "text" : "password"}
+            type="password"
             placeholder="Confirm Password"
             className="w-full outline-none bg-transparent text-black placeholder-black-300"
             onChange={(e) => setConfirmPassword(e.target.value)}
           />
-          <span
-            className="absolute right-3 cursor-pointer text-gray-200"
-            onClick={() => setShowConfirm(!showConfirm)}
-          >
-            {showConfirm ? <FiEyeOff /> : <FiEye />}
-          </span>
         </div>
-
         {/* SIGNUP BUTTON */}
         <button
           onClick={handleSignup}
