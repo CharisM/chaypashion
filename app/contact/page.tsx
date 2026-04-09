@@ -22,17 +22,15 @@ export default function Contact() {
         </ul>
       </nav>
 
-      {/* BANNER IMAGE */}
-      <div className="relative w-full h-64 md:h-72 lg:h-80">
-        <img
-          src="/contact-banner.jpg" // ibutang nimo ang imong image file dinhi
-          alt="Contact Banner"
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
-          <h1 className="text-white text-3xl md:text-4xl font-bold">CONTACT US</h1>
-        </div>
-      </div>
+   {/* BANNER IMAGE */}
+        <div
+      className="relative w-full h-64 md:h-72 lg:h-80 flex items-center justify-center bg-cover bg-center"
+      style={{ backgroundImage: "url('/abct.jpg')" }}
+    >
+      <h1 className="text-white text-3xl md:text-4xl font-bold">
+        CONTACT US
+      </h1>
+    </div>
 
       {/* CONTENT */}
       <div className="max-w-6xl mx-auto px-5 py-12 grid grid-cols-1 md:grid-cols-3 gap-8">

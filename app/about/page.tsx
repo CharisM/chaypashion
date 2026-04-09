@@ -20,20 +20,15 @@ export default function About() {
         </ul>
       </nav>
 
-      {/* BANNER */}
-      <div className="relative w-full h-60 md:h-72 lg:h-80">
-        <img
-          src="/about-img.jpg"
-          alt="About Chay Fashion"
-          className="w-full h-full object-cover rounded-b-lg"
-        />
-        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-20 rounded-b-lg">
-          <h1 className="text-white text-2xl md:text-3xl lg:text-4xl font-bold text-center px-4">
-            ABOUT CHAY FASHION
-          </h1>
-        </div>
-      </div>
-
+       {/* BANNER IMAGE */}
+        <div
+      className="relative w-full h-64 md:h-72 lg:h-80 flex items-center justify-center bg-cover bg-center"
+      style={{ backgroundImage: "url('/abct.jpg')" }}
+    >
+      <h1 className="text-white text-3xl md:text-4xl font-bold">
+       ABOUT CHAY FASHION
+      </h1>
+    </div>
 
       {/* ABOUT CONTENT */}
       <div className="flex flex-col md:flex-row justify-center items-start max-w-6xl mx-auto my-8 px-5 gap-8">
