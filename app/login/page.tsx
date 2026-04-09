@@ -42,7 +42,7 @@ export default function Login() {
 
         {/* EMAIL */}
         <div className="flex items-center border-b border-white/50 mb-4 py-2 px-3 focus-within:border-white/80 transition rounded-md bg-white/20 backdrop-blur-md">
-          <FiMail className="text-gray-200 mr-2 text-lg" />
+          <FiMail className="text-black-200 mr-2 text-lg" />
           <input
             type="email"
             placeholder="Email"
@@ -53,7 +53,7 @@ export default function Login() {
 
         {/* PASSWORD */}
         <div className="flex items-center border-b border-white/50 mb-6 py-2 px-3 focus-within:border-white/80 transition rounded-md bg-white/20 backdrop-blur-md">
-          <FiLock className="text-gray-200 mr-2 text-lg" />
+          <FiLock className="text-black-200 mr-2 text-lg" />
           <input
             type="password"
             placeholder="Password"

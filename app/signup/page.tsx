@@ -35,7 +35,7 @@ export default function Signup() {
       style={{ backgroundImage: "url('/BG.jpg')" }}
     >
       {/* DARK OVERLAY */}
-      <div className="absolute inset-0 bg-black/50"></div>
+      <div className="absolute inset-0 bg-black/20"></div>
 
       {/* SIGNUP CARD */}
       <div className="relative bg-white/30 backdrop-blur-xl border border-white/30 p-5 w-[300px] md:w-[340px] shadow-2xl rounded-3xl z-10">
@@ -43,38 +43,38 @@ export default function Signup() {
           Sign Up
         </h2>
         <p className="text-center text-white-500 mb-5">
-          Create your account to start shopping
+          Create your account to start shopping.
         </p>
 
         {/* USERNAME */}
         <div className="flex items-center border-b border-white/50 mb-3 py-2 px-3 focus-within:border-white/80 transition rounded-md bg-white/20 backdrop-blur-md">
-          <FiUser className="text-gray-200 mr-2 text-lg" />
+          <FiUser className="text-black-200 mr-2 text-lg" />
           <input
             type="text"
             placeholder="Username"
-            className="w-full outline-none bg-transparent text-white placeholder-gray-300"
+            className="w-full outline-none bg-transparent text-black placeholder-black-300"
             onChange={(e) => setUsername(e.target.value)}
           />
         </div>
 
         {/* EMAIL */}
         <div className="flex items-center border-b border-white/50 mb-3 py-2 px-3 focus-within:border-white/80 transition rounded-md bg-white/20 backdrop-blur-md">
-          <FiMail className="text-gray-200 mr-2 text-lg" />
+          <FiMail className="text-black-200 mr-2 text-lg" />
           <input
             type="email"
             placeholder="Email"
-            className="w-full outline-none bg-transparent text-white placeholder-gray-300"
+            className="w-full outline-none bg-transparent text-black placeholder-black-300"
             onChange={(e) => setEmail(e.target.value)}
           />
         </div>
 
         {/* PHONE NUMBER */}
         <div className="flex items-center border-b border-white/50 mb-3 py-2 px-3 focus-within:border-white/80 transition rounded-md bg-white/20 backdrop-blur-md">
-          <FiPhone className="text-gray-200 mr-2 text-lg" />
+          <FiPhone className="text-black-200 mr-2 text-lg" />
           <input
             type="tel"
             placeholder="Phone Number"
-            className="w-full outline-none bg-transparent text-white placeholder-gray-300"
+            className="w-full outline-none bg-transparent text-black placeholder-black-300"
             onChange={(e) => setNumber(e.target.value)}
           />
         </div>
@@ -82,11 +82,11 @@ export default function Signup() {
        
         {/* PASSWORD */}
         <div className="flex items-center border-b border-white/50 mb-3 py-2 px-3 focus-within:border-white/80 transition rounded-md bg-white/20 backdrop-blur-md relative">
-          <FiLock className="text-gray-200 mr-2 text-lg" />
+          <FiLock className="text-black-200 mr-2 text-lg" />
           <input
             type={showPassword ? "text" : "password"}
             placeholder="Password"
-            className="w-full outline-none bg-transparent text-white placeholder-gray-300"
+            className="w-full outline-none bg-transparent text-black placeholder-black-300"
             onChange={(e) => setPassword(e.target.value)}
           />
           <span
@@ -99,11 +99,11 @@ export default function Signup() {
 
         {/* CONFIRM PASSWORD */}
         <div className="flex items-center border-b border-white/50 mb-5 py-2 px-3 focus-within:border-white/80 transition rounded-md bg-white/20 backdrop-blur-md relative">
-          <FiLock className="text-gray-200 mr-2 text-lg" />
+          <FiLock className="text-black-200 mr-2 text-lg" />
           <input
             type={showConfirm ? "text" : "password"}
             placeholder="Confirm Password"
-            className="w-full outline-none bg-transparent text-white placeholder-gray-300"
+            className="w-full outline-none bg-transparent text-black placeholder-black-300"
             onChange={(e) => setConfirmPassword(e.target.value)}
           />
           <span
@@ -123,7 +123,7 @@ export default function Signup() {
         </button>
 
         {/* LOGIN LINK */}
-        <p className="text-sm mt-4 text-center text-gray-300">
+        <p className="text-sm mt-4 text-center text-white-300">
           Already have an account?{" "}
           <Link href="/login" className="text-blue-400 hover:underline">
             Login
