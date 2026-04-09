@@ -33,29 +33,28 @@ export default function Home() {
       </nav>
 
       {/* HERO */}
-      <div
-        className="h-screen bg-cover bg-center relative"
-        style={{ backgroundImage: "url('/BG.jpg')" }}
-      >
-        <div className="absolute inset-0 bg-black/10"></div>
+    <div
+      className="h-[70vh] bg-cover bg-center relative"
+      style={{ backgroundImage: "url('/BG.jpg')" }}
+    >
+      <div className="absolute inset-0 bg-black/10"></div>
 
-        <div className="relative flex items-center h-full px-16">
-          <div className="text-white max-w-xl">
-            <h1 className="text-5xl font-bold leading-tight drop-shadow-lg">
-              STYLIST PICKS BEAT
-              <br />
-              THE HEAT
-            </h1>
+      <div className="relative flex items-center h-full px-16">
+        <div className="text-white max-w-xl">
+          <h1 className="text-5xl font-bold leading-tight drop-shadow-lg">
+            STYLIST PICKS BEAT
+            <br />
+            THE HEAT
+          </h1>
 
-            <Link href="/login">
-              <button className="mt-8 border-2 border-white px-6 py-2 hover:bg-white hover:text-black transition">
-                SHOP NOW
-              </button>
-            </Link>
-          </div>
+          <Link href="/login">
+            <button className="mt-8 border-2 border-white px-6 py-2 hover:bg-white hover:text-black transition">
+              SHOP NOW
+            </button>
+          </Link>
         </div>
       </div>
-
+    </div>
       {/* PRODUCTS */}
       <div className="bg-gray-100 py-16 px-10 text-center">
         <h2 className="text-xl font-semibold">Discover NEW Arrivals</h2>
