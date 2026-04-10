@@ -1,22 +1,84 @@
+"use client";
+
 import Link from "next/link";
-import { FiSearch } from "react-icons/fi";
+import { useEffect, useState, useRef } from "react";
+import { FiSearch, FiUser } from "react-icons/fi";
+import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
 
 export default function About() {
+  const router = useRouter();
+  const [username, setUsername] = useState<string | null>(null);
+  const [dropdown, setDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLLIElement>(null);
+
+  useEffect(() => {
+    const getUser = async (user: any) => {
+      if (user) {
+        const { data } = await supabase.from("profiles").select("username").eq("id", user.id).single();
+        setUsername(data?.username ?? user.email ?? null);
+      } else {
+        setUsername(null);
+      }
+    };
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      getUser(session?.user ?? null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      getUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node))
+        setDropdown(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setUsername(null);
+    setDropdown(false);
+    router.push("/login");
+  };
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
 
       {/* NAVBAR */}
       <nav className="flex justify-between items-center px-12 py-4 bg-white shadow">
-        <h1 className="text-3xl font-serif italic">Chay Fashion</h1>
+        <Link href="/"><h1 className="text-3xl font-serif italic">Chay Fashion</h1></Link>
         <ul className="flex gap-8 text-sm font-medium items-center">
           <li><Link href="/">HOME</Link></li>
           <li className="text-blue-600">ABOUT</li>
           <li><Link href="/contact">CONTACT US</Link></li>
-          <li>
-            <Link href="/search">
-                <FiSearch className="text-lg cursor-pointer" />
-            </Link>
-            </li>
+          <li><FiSearch className="text-lg cursor-pointer hover:opacity-70 transition" /></li>
+          <li className="relative" ref={dropdownRef}>
+            <button
+              onClick={() => setDropdown(!dropdown)}
+              className="flex items-center gap-2 hover:opacity-80 transition"
+            >
+              <div className="w-9 h-9 rounded-full bg-black flex items-center justify-center">
+                <FiUser className="text-white text-lg" />
+              </div>
+              {username && <span className="text-sm font-medium">{username}</span>}
+            </button>
+            {dropdown && (
+              <div className="absolute right-0 mt-2 w-44 bg-white border rounded-xl shadow-lg z-[999] overflow-hidden">
+                <Link href="/profile" onClick={() => setDropdown(false)} className="block px-4 py-2 text-sm hover:bg-gray-100">Profile</Link>
+                {username
+                  ? <button onClick={handleLogout} className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-100">Logout</button>
+                  : <Link href="/login" onClick={() => setDropdown(false)} className="block px-4 py-2 text-sm hover:bg-gray-100">Login</Link>
+                }
+              </div>
+            )}
+          </li>
         </ul>
       </nav>
 
