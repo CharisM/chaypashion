@@ -109,14 +109,7 @@ export default function About() {
           </div>
         </div>
 
-        {/* IMAGE SECTION */}
-        <div className="flex-1 hidden md:block">
-          <img
-            src="/about-img.jpg"
-            alt="Fashion Display"
-            className="w-full h-full object-cover rounded shadow"
-          />
-        </div>
+
       </div>
 
       {/* FOOTER */}
