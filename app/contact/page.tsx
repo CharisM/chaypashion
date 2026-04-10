@@ -51,7 +51,7 @@ export default function Contact() {
     router.push("/login");
   };
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
+    <div className="flex flex-col min-h-screen bg-white">
 
       {/* NAVBAR */}
       <nav className="flex justify-between items-center px-12 py-4 bg-white shadow">
@@ -84,106 +84,106 @@ export default function Contact() {
         </ul>
       </nav>
 
-   {/* BANNER IMAGE */}
-        <div
-      className="relative w-full h-64 md:h-72 lg:h-80 flex items-center justify-center bg-cover bg-center"
-      style={{ backgroundImage: "url('/abct.jpg')" }}
-    >
-      <h1 className="text-white text-3xl md:text-4xl font-bold">
-        CONTACT US
-      </h1>
-    </div>
-
-      {/* CONTENT */}
-      <div className="max-w-6xl mx-auto px-5 py-12 grid grid-cols-1 md:grid-cols-3 gap-8">
-
-        {/* FORM */}
-        <div className="md:col-span-2 bg-white p-8 shadow rounded">
-          <h2 className="text-2xl font-semibold mb-4">We would love to hear from you.</h2>
-          <p className="text-gray-600 mb-6">
-            If you have any query or any type of suggestion, you can contact us here.
-          </p>
-          <form className="space-y-4">
-            <input
-              type="text"
-              placeholder="Name"
-              className="w-full border border-gray-300 rounded px-3 py-2"
-            />
-            <input
-              type="email"
-              placeholder="Email"
-              className="w-full border border-gray-300 rounded px-3 py-2"
-            />
-            <textarea
-              placeholder="Message"
-              rows={4}
-              className="w-full border border-gray-300 rounded px-3 py-2"
-            ></textarea>
-            <button type="submit" className="bg-black text-white px-6 py-2 rounded">
-              SEND MESSAGE
-            </button>
-          </form>
+      {/* HERO BANNER */}
+      <div
+        className="relative w-full h-72 flex items-center justify-center bg-cover bg-center"
+        style={{ backgroundImage: "url('/abct.jpg')" }}
+      >
+        <div className="absolute inset-0 bg-black/50"></div>
+        <div className="relative text-center">
+          <span className="text-xs tracking-[0.4em] text-gray-300 uppercase">Get In Touch</span>
+          <h1 className="text-white text-4xl font-bold mt-2 tracking-tight">Contact Us</h1>
         </div>
-
-        {/* CONTACT INFO */}
-        <div className="bg-gray-50 p-8 rounded shadow space-y-6">
-          <div>
-            <h3 className="font-semibold">📍 Visit Us</h3>
-            <p className="text-gray-500">Philippines</p>
-          </div>
-          <div>
-            <h3 className="font-semibold">📧 Email</h3>
-            <p className="text-gray-500">support@chayfashion.com</p>
-          </div>
-          <div>
-            <h3 className="font-semibold">📞 Phone</h3>
-            <p className="text-gray-500">09123456789</p>
-          </div>
-        </div>
-
       </div>
 
-      {/* FOOTER */}
-      <footer className="bg-white text-gray-700 px-16 py-12 border-t">
-        <div className="grid grid-cols-4 gap-10 text-sm">
+      {/* CONTENT */}
+      <div className="max-w-5xl mx-auto px-8 py-20 w-full">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
 
-          <div>
-            <h3 className="font-semibold mb-3">COMPANY</h3>
-            <ul className="space-y-2">
-              <li>About Us</li>
-              <li>Shop</li>
-              <li>Contact</li>
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="font-semibold mb-3">MORE</h3>
-            <ul className="space-y-2">
-              <li>Offers</li>
-              <li>Gift Cards</li>
-              <li>Terms</li>
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="font-semibold mb-3">NEWSLETTER</h3>
-            <div className="flex border-b border-gray-400 pb-1">
+          {/* FORM */}
+          <div className="md:col-span-2">
+            <span className="text-xs tracking-[0.3em] text-gray-400 uppercase">Send a Message</span>
+            <h2 className="text-2xl font-bold mt-2 mb-6">We'd love to hear from you.</h2>
+            <form className="space-y-4">
+              <input
+                type="text"
+                placeholder="Your Name"
+                className="w-full border-b border-gray-300 py-3 outline-none text-sm focus:border-black transition bg-transparent placeholder-gray-400"
+              />
               <input
                 type="email"
-                placeholder="Enter email"
-                className="bg-transparent outline-none flex-1"
+                placeholder="Your Email"
+                className="w-full border-b border-gray-300 py-3 outline-none text-sm focus:border-black transition bg-transparent placeholder-gray-400"
               />
-              <button className="ml-2">→</button>
+              <textarea
+                placeholder="Your Message"
+                rows={4}
+                className="w-full border-b border-gray-300 py-3 outline-none text-sm focus:border-black transition bg-transparent placeholder-gray-400 resize-none"
+              />
+              <button type="submit" className="mt-4 bg-black text-white px-10 py-3 text-xs tracking-widest uppercase hover:bg-gray-800 transition">
+                Send Message
+              </button>
+            </form>
+          </div>
+
+          {/* CONTACT INFO */}
+          <div className="space-y-8 pt-10">
+            <div>
+              <h3 className="text-xs tracking-[0.2em] uppercase font-semibold mb-2">Visit Us</h3>
+              <p className="text-gray-500 text-sm">Philippines</p>
+            </div>
+            <div className="h-px bg-gray-100"></div>
+            <div>
+              <h3 className="text-xs tracking-[0.2em] uppercase font-semibold mb-2">Email</h3>
+              <p className="text-gray-500 text-sm">support@chayfashion.com</p>
+            </div>
+            <div className="h-px bg-gray-100"></div>
+            <div>
+              <h3 className="text-xs tracking-[0.2em] uppercase font-semibold mb-2">Phone</h3>
+              <p className="text-gray-500 text-sm">09123456789</p>
             </div>
           </div>
 
         </div>
+      </div>
 
-        <div className="border-t mt-10 pt-6 text-xs flex justify-between">
-          <p>© 2026 Chay Passion</p>
-          <div className="flex gap-4">
-            <p>Privacy Policy</p>
-            <p>Terms</p>
+      {/* FOOTER */}
+      <footer className="bg-black text-gray-400 pt-16 pb-8 px-16 mt-auto">
+        <div className="grid grid-cols-4 gap-10 pb-12 border-b border-gray-800">
+          <div className="col-span-1">
+            <h2 className="text-white text-2xl font-serif italic mb-4">Chay Fashion</h2>
+            <p className="text-sm leading-relaxed text-gray-500">Modern styles for everyday wear. Quality fashion made accessible for everyone.</p>
+          </div>
+          <div>
+            <h3 className="text-white text-xs tracking-[0.2em] uppercase mb-5">Company</h3>
+            <ul className="space-y-3 text-sm">
+              <li><Link href="/about" className="hover:text-white transition">About Us</Link></li>
+              <li><Link href="/" className="hover:text-white transition">Shop</Link></li>
+              <li><Link href="/contact" className="hover:text-white transition">Contact</Link></li>
+            </ul>
+          </div>
+          <div>
+            <h3 className="text-white text-xs tracking-[0.2em] uppercase mb-5">More</h3>
+            <ul className="space-y-3 text-sm">
+              <li><span className="hover:text-white transition cursor-pointer">Offers</span></li>
+              <li><span className="hover:text-white transition cursor-pointer">Gift Cards</span></li>
+              <li><span className="hover:text-white transition cursor-pointer">Terms</span></li>
+            </ul>
+          </div>
+          <div>
+            <h3 className="text-white text-xs tracking-[0.2em] uppercase mb-5">Newsletter</h3>
+            <p className="text-sm text-gray-500 mb-4">Get the latest drops and offers.</p>
+            <div className="flex">
+              <input type="email" placeholder="Your email" className="bg-gray-900 text-white text-sm px-4 py-2 outline-none flex-1 placeholder-gray-600 border border-gray-700 focus:border-gray-500 transition" />
+              <button className="bg-white text-black px-4 py-2 text-sm font-semibold hover:bg-gray-200 transition">→</button>
+            </div>
+          </div>
+        </div>
+        <div className="pt-6 flex justify-between items-center text-xs text-gray-600">
+          <p>© 2026 Chay Fashion. All rights reserved.</p>
+          <div className="flex gap-6">
+            <span className="hover:text-white transition cursor-pointer">Privacy Policy</span>
+            <span className="hover:text-white transition cursor-pointer">Terms of Service</span>
           </div>
         </div>
       </footer>

@@ -51,7 +51,7 @@ export default function About() {
     router.push("/login");
   };
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
+    <div className="flex flex-col min-h-screen bg-white">
 
       {/* NAVBAR */}
       <nav className="flex justify-between items-center px-12 py-4 bg-white shadow">
@@ -84,77 +84,86 @@ export default function About() {
         </ul>
       </nav>
 
-       {/* BANNER IMAGE */}
-        <div
-      className="relative w-full h-64 md:h-72 lg:h-80 flex items-center justify-center bg-cover bg-center"
-      style={{ backgroundImage: "url('/abct.jpg')" }}
-    >
-      <h1 className="text-white text-3xl md:text-4xl font-bold">
-       ABOUT CHAY FASHION
-      </h1>
-    </div>
+      {/* HERO BANNER */}
+      <div
+        className="relative w-full h-72 flex items-center justify-center bg-cover bg-center"
+        style={{ backgroundImage: "url('/abct.jpg')" }}
+      >
+        <div className="absolute inset-0 bg-black/50"></div>
+        <div className="relative text-center">
+          <span className="text-xs tracking-[0.4em] text-gray-300 uppercase">Who We Are</span>
+          <h1 className="text-white text-4xl font-bold mt-2 tracking-tight">About Chay Fashion</h1>
+        </div>
+      </div>
 
-      {/* ABOUT CONTENT */}
-      <div className="flex flex-col md:flex-row justify-center items-start max-w-6xl mx-auto my-8 px-5 gap-8">
-
-        {/* TEXT SECTION */}
-        <div className="flex-1 space-y-4">
-          <h2 className="text-2xl md:text-3xl font-semibold">Our Mission</h2>
-          <p className="text-gray-600 text-sm md:text-base">
-            Chay Fashion brings modern and stylish outfits for everyday wear. We focus on comfort, quality, and affordable fashion for everyone. Our goal is to make fashion accessible and enjoyable, while helping you express your unique style.
+      {/* MISSION */}
+      <div className="max-w-5xl mx-auto px-8 py-20">
+        <div className="flex flex-col items-center text-center mb-16">
+          <span className="text-xs tracking-[0.3em] text-gray-400 uppercase mb-3">Our Purpose</span>
+          <h2 className="text-3xl font-bold mb-4">Dressed for Every Moment</h2>
+          <div className="h-px w-16 bg-black mb-6"></div>
+          <p className="text-gray-500 max-w-xl leading-relaxed">
+            Chay Fashion brings modern and stylish outfits for everyday wear. We focus on comfort, quality, and affordable fashion for everyone — helping you express your unique style.
           </p>
-
-          <div className="grid grid-cols-3 gap-3 text-xs md:text-sm mt-4">
-            <div className="bg-gray-100 p-3 text-center rounded shadow-sm">✨ Trendy</div>
-            <div className="bg-gray-100 p-3 text-center rounded shadow-sm">💎 Quality</div>
-            <div className="bg-gray-100 p-3 text-center rounded shadow-sm">🚚 Fast</div>
-          </div>
         </div>
 
-
+        {/* VALUES */}
+        <div className="grid grid-cols-3 gap-8 text-center">
+          <div className="border border-gray-100 p-8 hover:shadow-md transition">
+            <div className="text-3xl mb-4">✨</div>
+            <h3 className="font-semibold text-sm tracking-widest uppercase mb-2">Trendy</h3>
+            <p className="text-gray-400 text-sm">Always up to date with the latest fashion trends.</p>
+          </div>
+          <div className="border border-gray-100 p-8 hover:shadow-md transition">
+            <div className="text-3xl mb-4">💎</div>
+            <h3 className="font-semibold text-sm tracking-widest uppercase mb-2">Quality</h3>
+            <p className="text-gray-400 text-sm">Premium materials crafted for comfort and durability.</p>
+          </div>
+          <div className="border border-gray-100 p-8 hover:shadow-md transition">
+            <div className="text-3xl mb-4">🚚</div>
+            <h3 className="font-semibold text-sm tracking-widest uppercase mb-2">Fast Delivery</h3>
+            <p className="text-gray-400 text-sm">Quick and reliable shipping straight to your door.</p>
+          </div>
+        </div>
       </div>
 
       {/* FOOTER */}
-      <footer className="bg-white text-gray-700 px-16 py-12 border-t">
-        <div className="grid grid-cols-4 gap-10 text-sm">
-
+      <footer className="bg-black text-gray-400 pt-16 pb-8 px-16 mt-auto">
+        <div className="grid grid-cols-4 gap-10 pb-12 border-b border-gray-800">
+          <div className="col-span-1">
+            <h2 className="text-white text-2xl font-serif italic mb-4">Chay Fashion</h2>
+            <p className="text-sm leading-relaxed text-gray-500">Modern styles for everyday wear. Quality fashion made accessible for everyone.</p>
+          </div>
           <div>
-            <h3 className="font-semibold mb-3">COMPANY</h3>
-            <ul className="space-y-2">
-              <li>About Us</li>
-              <li>Shop</li>
-              <li>Contact</li>
+            <h3 className="text-white text-xs tracking-[0.2em] uppercase mb-5">Company</h3>
+            <ul className="space-y-3 text-sm">
+              <li><Link href="/about" className="hover:text-white transition">About Us</Link></li>
+              <li><Link href="/" className="hover:text-white transition">Shop</Link></li>
+              <li><Link href="/contact" className="hover:text-white transition">Contact</Link></li>
             </ul>
           </div>
-
           <div>
-            <h3 className="font-semibold mb-3">MORE</h3>
-            <ul className="space-y-2">
-              <li>Offers</li>
-              <li>Gift Cards</li>
-              <li>Terms</li>
+            <h3 className="text-white text-xs tracking-[0.2em] uppercase mb-5">More</h3>
+            <ul className="space-y-3 text-sm">
+              <li><span className="hover:text-white transition cursor-pointer">Offers</span></li>
+              <li><span className="hover:text-white transition cursor-pointer">Gift Cards</span></li>
+              <li><span className="hover:text-white transition cursor-pointer">Terms</span></li>
             </ul>
           </div>
-
           <div>
-            <h3 className="font-semibold mb-3">NEWSLETTER</h3>
-            <div className="flex border-b border-gray-400 pb-1">
-              <input
-                type="email"
-                placeholder="Enter email"
-                className="bg-transparent outline-none flex-1"
-              />
-              <button className="ml-2">→</button>
+            <h3 className="text-white text-xs tracking-[0.2em] uppercase mb-5">Newsletter</h3>
+            <p className="text-sm text-gray-500 mb-4">Get the latest drops and offers.</p>
+            <div className="flex">
+              <input type="email" placeholder="Your email" className="bg-gray-900 text-white text-sm px-4 py-2 outline-none flex-1 placeholder-gray-600 border border-gray-700 focus:border-gray-500 transition" />
+              <button className="bg-white text-black px-4 py-2 text-sm font-semibold hover:bg-gray-200 transition">→</button>
             </div>
           </div>
-
         </div>
-
-        <div className="border-t mt-10 pt-6 text-xs flex justify-between">
-          <p>© 2026 Chay Passion</p>
-          <div className="flex gap-4">
-            <p>Privacy Policy</p>
-            <p>Terms</p>
+        <div className="pt-6 flex justify-between items-center text-xs text-gray-600">
+          <p>© 2026 Chay Fashion. All rights reserved.</p>
+          <div className="flex gap-6">
+            <span className="hover:text-white transition cursor-pointer">Privacy Policy</span>
+            <span className="hover:text-white transition cursor-pointer">Terms of Service</span>
           </div>
         </div>
       </footer>
