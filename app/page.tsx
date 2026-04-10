@@ -164,46 +164,61 @@ export default function Home() {
       </div>
 
       {/* FOOTER */}
-      <footer className="bg-white text-gray-700 px-16 py-12 border-t">
-        <div className="grid grid-cols-4 gap-10 text-sm">
+      <footer className="bg-black text-gray-400 pt-16 pb-8 px-16">
+        <div className="grid grid-cols-4 gap-10 pb-12 border-b border-gray-800">
 
+          {/* BRAND */}
+          <div className="col-span-1">
+            <h2 className="text-white text-2xl font-serif italic mb-4">Chay Fashion</h2>
+            <p className="text-sm leading-relaxed text-gray-500">
+              Modern styles for everyday wear. Quality fashion made accessible for everyone.
+            </p>
+          </div>
+
+          {/* COMPANY */}
           <div>
-            <h3 className="font-semibold mb-3">COMPANY</h3>
-            <ul className="space-y-2">
-              <li>About Us</li>
-              <li>Shop</li>
-              <li>Contact</li>
+            <h3 className="text-white text-xs tracking-[0.2em] uppercase mb-5">Company</h3>
+            <ul className="space-y-3 text-sm">
+              <li><Link href="/about" className="hover:text-white transition">About Us</Link></li>
+              <li><Link href="/" className="hover:text-white transition">Shop</Link></li>
+              <li><Link href="/contact" className="hover:text-white transition">Contact</Link></li>
             </ul>
           </div>
 
+          {/* MORE */}
           <div>
-            <h3 className="font-semibold mb-3">MORE</h3>
-            <ul className="space-y-2">
-              <li>Offers</li>
-              <li>Gift Cards</li>
-              <li>Terms</li>
+            <h3 className="text-white text-xs tracking-[0.2em] uppercase mb-5">More</h3>
+            <ul className="space-y-3 text-sm">
+              <li><span className="hover:text-white transition cursor-pointer">Offers</span></li>
+              <li><span className="hover:text-white transition cursor-pointer">Gift Cards</span></li>
+              <li><span className="hover:text-white transition cursor-pointer">Terms</span></li>
             </ul>
           </div>
 
+          {/* NEWSLETTER */}
           <div>
-            <h3 className="font-semibold mb-3">NEWSLETTER</h3>
-            <div className="flex border-b border-gray-400 pb-1">
+            <h3 className="text-white text-xs tracking-[0.2em] uppercase mb-5">Newsletter</h3>
+            <p className="text-sm text-gray-500 mb-4">Get the latest drops and offers.</p>
+            <div className="flex">
               <input
                 type="email"
-                placeholder="Enter email"
-                className="bg-transparent outline-none flex-1"
+                placeholder="Your email"
+                className="bg-gray-900 text-white text-sm px-4 py-2 outline-none flex-1 placeholder-gray-600 border border-gray-700 focus:border-gray-500 transition"
               />
-              <button className="ml-2">→</button>
+              <button className="bg-white text-black px-4 py-2 text-sm font-semibold hover:bg-gray-200 transition">
+                →
+              </button>
             </div>
           </div>
 
         </div>
 
-        <div className="border-t mt-10 pt-6 text-xs flex justify-between">
-          <p>© 2026 Chay Passion</p>
-          <div className="flex gap-4">
-            <p>Privacy Policy</p>
-            <p>Terms</p>
+        {/* BOTTOM */}
+        <div className="pt-6 flex justify-between items-center text-xs text-gray-600">
+          <p>© 2026 Chay Fashion. All rights reserved.</p>
+          <div className="flex gap-6">
+            <span className="hover:text-white transition cursor-pointer">Privacy Policy</span>
+            <span className="hover:text-white transition cursor-pointer">Terms of Service</span>
           </div>
         </div>
       </footer>
