@@ -37,12 +37,22 @@ export default function Home() {
       setLoaded(true);
     };
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        supabase.auth.signOut();
+        setLoaded(true);
+        return;
+      }
       getUser(session?.user ?? null);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      getUser(session?.user ?? null);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "TOKEN_REFRESHED" || event === "SIGNED_IN") {
+        getUser(session?.user ?? null);
+      } else if (event === "SIGNED_OUT") {
+        setUsername(null);
+        setLoaded(true);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -165,10 +175,10 @@ export default function Home() {
 
       {/* FOOTER */}
       <footer className="bg-black text-gray-400 pt-16 pb-8 px-16">
-        <div className="grid grid-cols-4 gap-10 pb-12 border-b border-gray-800">
+        <div className="grid grid-cols-2 gap-10 pb-12 border-b border-gray-800">
 
           {/* BRAND */}
-          <div className="col-span-1">
+          <div>
             <h2 className="text-white text-2xl font-serif italic mb-4">Chay Fashion</h2>
             <p className="text-sm leading-relaxed text-gray-500">
               Modern styles for everyday wear. Quality fashion made accessible for everyone.
@@ -183,32 +193,6 @@ export default function Home() {
               <li><Link href="/" className="hover:text-white transition">Shop</Link></li>
               <li><Link href="/contact" className="hover:text-white transition">Contact</Link></li>
             </ul>
-          </div>
-
-          {/* MORE */}
-          <div>
-            <h3 className="text-white text-xs tracking-[0.2em] uppercase mb-5">More</h3>
-            <ul className="space-y-3 text-sm">
-              <li><span className="hover:text-white transition cursor-pointer">Offers</span></li>
-              <li><span className="hover:text-white transition cursor-pointer">Gift Cards</span></li>
-              <li><span className="hover:text-white transition cursor-pointer">Terms</span></li>
-            </ul>
-          </div>
-
-          {/* NEWSLETTER */}
-          <div>
-            <h3 className="text-white text-xs tracking-[0.2em] uppercase mb-5">Newsletter</h3>
-            <p className="text-sm text-gray-500 mb-4">Get the latest drops and offers.</p>
-            <div className="flex">
-              <input
-                type="email"
-                placeholder="Your email"
-                className="bg-gray-900 text-white text-sm px-4 py-2 outline-none flex-1 placeholder-gray-600 border border-gray-700 focus:border-gray-500 transition"
-              />
-              <button className="bg-white text-black px-4 py-2 text-sm font-semibold hover:bg-gray-200 transition">
-                →
-              </button>
-            </div>
           </div>
 
         </div>

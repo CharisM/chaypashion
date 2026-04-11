@@ -24,12 +24,17 @@ export default function About() {
       }
     };
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) { supabase.auth.signOut(); return; }
       getUser(session?.user ?? null);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      getUser(session?.user ?? null);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "TOKEN_REFRESHED" || event === "SIGNED_IN") {
+        getUser(session?.user ?? null);
+      } else if (event === "SIGNED_OUT") {
+        setUsername(null);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -108,7 +113,7 @@ export default function About() {
         </div>
 
         {/* VALUES */}
-        <div className="grid grid-cols-3 gap-8 text-center">
+        <div className="grid grid-cols-2 gap-8 text-center">
           <div className="border border-gray-100 p-8 hover:shadow-md transition">
             <div className="text-3xl mb-4">✨</div>
             <h3 className="font-semibold text-sm tracking-widest uppercase mb-2">Trendy</h3>
@@ -119,18 +124,13 @@ export default function About() {
             <h3 className="font-semibold text-sm tracking-widest uppercase mb-2">Quality</h3>
             <p className="text-gray-400 text-sm">Premium materials crafted for comfort and durability.</p>
           </div>
-          <div className="border border-gray-100 p-8 hover:shadow-md transition">
-            <div className="text-3xl mb-4">🚚</div>
-            <h3 className="font-semibold text-sm tracking-widest uppercase mb-2">Fast Delivery</h3>
-            <p className="text-gray-400 text-sm">Quick and reliable shipping straight to your door.</p>
-          </div>
         </div>
       </div>
 
       {/* FOOTER */}
       <footer className="bg-black text-gray-400 pt-16 pb-8 px-16 mt-auto">
-        <div className="grid grid-cols-4 gap-10 pb-12 border-b border-gray-800">
-          <div className="col-span-1">
+        <div className="grid grid-cols-2 gap-10 pb-12 border-b border-gray-800">
+          <div>
             <h2 className="text-white text-2xl font-serif italic mb-4">Chay Fashion</h2>
             <p className="text-sm leading-relaxed text-gray-500">Modern styles for everyday wear. Quality fashion made accessible for everyone.</p>
           </div>
@@ -141,22 +141,6 @@ export default function About() {
               <li><Link href="/" className="hover:text-white transition">Shop</Link></li>
               <li><Link href="/contact" className="hover:text-white transition">Contact</Link></li>
             </ul>
-          </div>
-          <div>
-            <h3 className="text-white text-xs tracking-[0.2em] uppercase mb-5">More</h3>
-            <ul className="space-y-3 text-sm">
-              <li><span className="hover:text-white transition cursor-pointer">Offers</span></li>
-              <li><span className="hover:text-white transition cursor-pointer">Gift Cards</span></li>
-              <li><span className="hover:text-white transition cursor-pointer">Terms</span></li>
-            </ul>
-          </div>
-          <div>
-            <h3 className="text-white text-xs tracking-[0.2em] uppercase mb-5">Newsletter</h3>
-            <p className="text-sm text-gray-500 mb-4">Get the latest drops and offers.</p>
-            <div className="flex">
-              <input type="email" placeholder="Your email" className="bg-gray-900 text-white text-sm px-4 py-2 outline-none flex-1 placeholder-gray-600 border border-gray-700 focus:border-gray-500 transition" />
-              <button className="bg-white text-black px-4 py-2 text-sm font-semibold hover:bg-gray-200 transition">→</button>
-            </div>
           </div>
         </div>
         <div className="pt-6 flex justify-between items-center text-xs text-gray-600">
