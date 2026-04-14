@@ -9,14 +9,18 @@ import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 
 const products = [
-  { id: 1, img: "/image1.jpg" },
-  { id: 2, img: "/image2.jpg" },
-  { id: 3, img: "/image3.jpg" },
-  { id: 4, img: "/image4.jpg" },
-  { id: 5, img: "/image5.jpg" },
-  { id: 6, img: "/image6.jpg" },
-  { id: 7, img: "/image7.jpg" },
-  { id: 8, img: "/image8.jpg" },
+  { id: 1, img: "/D1.jpg" },
+  { id: 2, img: "/D2.jpg" },
+  { id: 3, img: "/D3.jpg" },
+  { id: 4, img: "/D4.jpg" },
+  { id: 5, img: "/WD1.jpg" },
+  { id: 6, img: "/WD2.jpg" },
+  { id: 7, img: "/WD3.jpg" },
+  { id: 8, img: "/WD4.jpg" },
+  { id: 9, img: "/SCRUB1.jpg" },
+  { id: 10, img: "/SCRUB2.jpg" },
+  { id: 11, img: "/SCRUB3.jpg" },
+  { id: 12, img: "/SCRUB4.jpg" },
 ];
 
 export default function Home() {
@@ -141,9 +145,16 @@ export default function Home() {
           <span className="text-xs tracking-[0.3em] text-gray-400 uppercase mb-3">What's New</span>
           <h2 className="text-3xl font-bold tracking-tight">New Arrivals</h2>
           <div className="flex items-center gap-3 mt-3">
-            <div className="h-px w-16 bg-gray-300"></div>
             <span className="text-gray-400 text-sm">Fresh styles just dropped</span>
-            <div className="h-px w-16 bg-gray-300"></div>
+          </div>
+          <div className="w-full text-left mt-4 flex gap-6">
+            <Link href="/shop" className="text-black text-sm hover:text-gray-600">Dress</Link>
+           
+            <Link href="/shop" className="text-black text-sm hover:text-gray-600">Watch</Link>
+           
+            <Link href="/shop" className="text-black text-sm hover:text-gray-600">Body Essentials</Link>
+            
+            <Link href="/shop" className="text-black text-sm hover:text-gray-600">View All</Link>
           </div>
         </div>
 
@@ -164,13 +175,7 @@ export default function Home() {
           ))}
         </div>
 
-        <div className="flex justify-center mt-12">
-          <Link href={loaded && !username ? "/login" : "/shop"}>
-            <button className="border border-black px-10 py-3 text-sm tracking-widest uppercase hover:bg-black hover:text-white transition duration-300">
-              View All
-            </button>
-          </Link>
-        </div>
+        
       </div>
 
       {/* FOOTER */}
