@@ -247,12 +247,6 @@ export default function Home() {
                       </div>
                       {/* OVERLAY */}
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition duration-300" />
-                      {/* VIEW BUTTON */}
-                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition duration-300">
-                        <span className="bg-white text-black text-xs font-bold px-6 py-2.5 tracking-[0.2em] uppercase shadow-md">
-                          View Item
-                        </span>
-                      </div>
                       {/* CATEGORY TAG */}
                       <div className="absolute top-3 left-3 bg-white/90 text-[10px] tracking-widest uppercase px-2 py-1 font-semibold text-gray-600">
                         {item.category}
