@@ -7,28 +7,20 @@ import { useEffect, useState, useRef } from "react";
 import { FiSearch, FiUser } from "react-icons/fi";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
-
-const products = [
-  { id: 1, img: "/D1.jpg" },
-  { id: 2, img: "/D2.jpg" },
-  { id: 3, img: "/D3.jpg" },
-  { id: 4, img: "/D4.jpg" },
-  { id: 5, img: "/WD1.jpg" },
-  { id: 6, img: "/WD2.jpg" },
-  { id: 7, img: "/WD3.jpg" },
-  { id: 8, img: "/WD4.jpg" },
-  { id: 9, img: "/SCRUB1.jpg" },
-  { id: 10, img: "/SCRUB2.jpg" },
-  { id: 11, img: "/SCRUB3.jpg" },
-  { id: 12, img: "/SCRUB4.jpg" },
-];
+import { products } from "@/lib/products";
 
 export default function Home() {
   const router = useRouter();
   const [username, setUsername] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [dropdown, setDropdown] = useState(false);
+  const [search, setSearch] = useState("");
   const dropdownRef = useRef<HTMLLIElement>(null);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (search.trim()) router.push(`/search?q=${encodeURIComponent(search.trim())}`);
+  };
 
   useEffect(() => {
     const getUser = async (user: any) => {
@@ -86,12 +78,21 @@ export default function Home() {
         <Link href="/"><h1 className="text-3xl font-serif italic">Chay Fashion</h1></Link>
 
         <ul className="flex gap-8 text-sm font-medium items-center">
+          <li>
+            <form onSubmit={handleSearch} className="flex items-center border border-gray-300 rounded-full px-3 py-1.5 gap-2 hover:border-gray-500 transition">
+              <FiSearch className="text-gray-400 text-sm shrink-0" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search products..."
+                className="text-xs outline-none bg-transparent w-36 placeholder-gray-400"
+              />
+            </form>
+          </li>
           <li className="text-blue-600"><Link href="/">HOME</Link></li>
           <li><Link href="/about">ABOUT</Link></li>
           <li><Link href="/contact">CONTACT US</Link></li>
-          <li>
-            <FiSearch className="text-lg cursor-pointer hover:opacity-70 transition" />
-          </li>
           <li className="relative" ref={dropdownRef}>
             <button
               onClick={() => setDropdown(!dropdown)}
@@ -104,11 +105,15 @@ export default function Home() {
             </button>
             {dropdown && (
               <div className="absolute right-0 mt-2 w-44 bg-white border rounded-xl shadow-lg z-[999] overflow-hidden">
-                <Link href="/profile" onClick={() => setDropdown(false)} className="block px-4 py-2 text-sm hover:bg-gray-100">Profile</Link>
-                {username
-                  ? <button onClick={handleLogout} className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-100">Logout</button>
-                  : <Link href="/login" onClick={() => setDropdown(false)} className="block px-4 py-2 text-sm hover:bg-gray-100">Login</Link>
-                }
+                {username ? (
+                  <>
+                    <Link href="/profile" onClick={() => setDropdown(false)} className="block px-4 py-2 text-sm hover:bg-gray-100">Profile</Link>
+                    <Link href="/cart" onClick={() => setDropdown(false)} className="block px-4 py-2 text-sm hover:bg-gray-100">My Cart</Link>
+                    <button onClick={handleLogout} className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-100">Logout</button>
+                  </>
+                ) : (
+                  <Link href="/login" onClick={() => setDropdown(false)} className="block px-4 py-2 text-sm hover:bg-gray-100">Login</Link>
+                )}
               </div>
             )}
           </li>
@@ -160,11 +165,11 @@ export default function Home() {
 
         <div className="grid grid-cols-4 gap-6">
           {products.map((item) => (
-            <Link key={item.id} href={loaded && !username ? "/login" : "/shop"}>
+            <Link key={item.id} href={loaded && !username ? "/login" : `/product/${item.id}`}>
               <div className="group relative overflow-hidden bg-gray-50 cursor-pointer">
                 <img
                   src={item.img}
-                  alt="dress"
+                  alt={item.name}
                   className="w-full h-[300px] object-cover transition-transform duration-500 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition duration-300 flex items-end justify-center pb-6 opacity-0 group-hover:opacity-100">
