@@ -9,7 +9,7 @@ import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { products } from "@/lib/products";
 import { motion, AnimatePresence } from "framer-motion";
-import { getCart } from "@/lib/cart";
+import { getCart, addToCart } from "@/lib/cart";
 
 export default function Home() {
   const router = useRouter();
@@ -19,6 +19,7 @@ export default function Home() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
   const [cartCount, setCartCount] = useState(0);
+  const [addedId, setAddedId] = useState<number | null>(null);
   const dropdownRef = useRef<HTMLLIElement>(null);
 
   const filteredProducts = filter === "All"
@@ -28,6 +29,16 @@ export default function Home() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (search.trim()) router.push(`/search?q=${encodeURIComponent(search.trim())}`);
+  };
+
+  const handleAddToCart = (e: React.MouseEvent, item: typeof products[0]) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!loaded || !username) { router.push("/login"); return; }
+    addToCart({ id: item.id, name: item.name, img: item.img, price: item.price, size: item.sizes[0], category: item.category });
+    setCartCount(getCart().length);
+    setAddedId(item.id);
+    setTimeout(() => setAddedId(null), 2000);
   };
 
   useEffect(() => {
@@ -249,7 +260,22 @@ export default function Home() {
                       {/* BOTTOM INFO */}
                       <div className="p-4 border-t border-gray-100">
                         <p className="text-sm font-semibold text-gray-800 truncate">{item.name}</p>
-                        <p className="text-sm font-bold text-[#c9a98a] mt-1">₱{item.price.toLocaleString()}</p>
+                        <div className="flex items-center justify-between mt-1">
+                          <p className="text-sm font-bold text-[#c9a98a]">₱{item.price.toLocaleString()}</p>
+                          <button
+                            onClick={(e) => handleAddToCart(e, item)}
+                            className={`w-8 h-8 rounded-full flex items-center justify-center transition ${
+                              addedId === item.id
+                                ? "bg-green-500 text-white"
+                                : "bg-black text-white hover:bg-gray-700"
+                            }`}
+                            title="Add to Cart"
+                          >
+                            {addedId === item.id
+                              ? <span className="text-xs font-bold">✓</span>
+                              : <FiShoppingCart className="text-xs" />}
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </Link>
