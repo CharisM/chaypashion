@@ -2,19 +2,34 @@
 
 export const dynamic = "force-dynamic";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { FiShoppingBag, FiTrash2, FiArrowLeft, FiEdit2, FiCheck, FiX } from "react-icons/fi";
+import { FiShoppingBag, FiTrash2, FiArrowLeft, FiEdit2, FiCheck, FiX, FiSearch, FiUser, FiShoppingCart } from "react-icons/fi";
 import Link from "next/link";
 import { getCart, removeFromCart, updateCartItem, CartItem } from "@/lib/cart";
 import { products } from "@/lib/products";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function CartPage() {
   const router = useRouter();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editSize, setEditSize] = useState<string>("");
+  const [search, setSearch] = useState("");
+  const [dropdown, setDropdown] = useState(false);
+  const [username, setUsername] = useState<string | null>(null);
+  const dropdownRef = useRef<HTMLLIElement>(null);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (search.trim()) router.push(`/search?q=${encodeURIComponent(search.trim())}`);
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push("/");
+  };
 
   useEffect(() => {
     const check = async () => {
@@ -23,6 +38,19 @@ export default function CartPage() {
     };
     check();
     setCart(getCart());
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      supabase.from("profiles").select("username").eq("id", session?.user?.id ?? "").single()
+        .then(({ data }) => setUsername(data?.username ?? session?.user?.email ?? null));
+    });
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node))
+        setDropdown(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleRemove = (index: number) => {
@@ -52,14 +80,42 @@ export default function CartPage() {
     <div className="min-h-screen bg-[#faf7f4]">
 
       {/* NAVBAR */}
-      <nav className="flex justify-between items-center px-12 py-5 bg-white border-b border-[#e8e0d8]">
+      <nav className="flex justify-between items-center px-12 py-4 bg-white shadow-sm">
         <Link href="/" className="text-3xl font-serif italic text-[#2c2c2c]">Chay Fashion</Link>
-        <button
-          onClick={() => router.back()}
-          className="flex items-center gap-2 text-sm text-[#9a8c82] hover:text-[#2c2c2c] transition"
-        >
-          <FiArrowLeft /> Back
-        </button>
+        <ul className="flex gap-8 text-sm font-medium items-center">
+          <li>
+            <form onSubmit={handleSearch} className="flex items-center border border-gray-300 rounded-full px-3 py-1.5 gap-2 hover:border-gray-500 transition">
+              <FiSearch className="text-gray-400 text-sm shrink-0" />
+              <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search products..." className="text-xs outline-none bg-transparent w-36 placeholder-gray-400" />
+            </form>
+          </li>
+          <li><Link href="/">HOME</Link></li>
+          <li><Link href="/about">ABOUT</Link></li>
+          <li>
+            <Link href="/cart" className="relative flex items-center hover:opacity-70 transition">
+              <FiShoppingCart className="text-xl" />
+              {cart.length > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                  {cart.length > 9 ? "9+" : cart.length}
+                </span>
+              )}
+            </Link>
+          </li>
+          <li className="relative" ref={dropdownRef}>
+            <button onClick={() => setDropdown(!dropdown)} className="flex items-center gap-2 hover:opacity-80 transition">
+              <div className="w-9 h-9 rounded-full bg-black flex items-center justify-center">
+                <FiUser className="text-white text-lg" />
+              </div>
+              {username && <span className="text-sm font-medium">{username}</span>}
+            </button>
+            {dropdown && (
+              <div className="absolute right-0 mt-2 w-44 bg-white border rounded-xl shadow-lg z-[999] overflow-hidden">
+                <Link href="/profile" onClick={() => setDropdown(false)} className="block px-4 py-2 text-sm hover:bg-gray-100">Profile</Link>
+                <button onClick={handleLogout} className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-100">Logout</button>
+              </div>
+            )}
+          </li>
+        </ul>
       </nav>
 
       <div className="max-w-5xl mx-auto px-6 py-14">
@@ -99,12 +155,17 @@ export default function CartPage() {
 
             {/* ITEMS LIST */}
             <div className="col-span-3 space-y-4">
+              <AnimatePresence>
               {cart.map((item, index) => {
                 const isEditing = editingIndex === index;
                 const sizes = getSizes(item.id);
                 return (
-                  <div
+                  <motion.div
                     key={index}
+                    initial={{ opacity: 0, x: -30 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 30, height: 0 }}
+                    transition={{ duration: 0.3, delay: index * 0.05 }}
                     className="group bg-white border border-[#e8e0d8] rounded-2xl overflow-hidden flex hover:shadow-md hover:border-[#c9a98a] transition duration-300"
                   >
                     {/* IMAGE */}
@@ -178,9 +239,10 @@ export default function CartPage() {
                         </button>
                       )}
                     </div>
-                  </div>
+                  </motion.div>
                 );
               })}
+              </AnimatePresence>
             </div>
 
             {/* ORDER SUMMARY */}
@@ -206,9 +268,9 @@ export default function CartPage() {
                 <span className="text-xl font-bold text-[#2c2c2c]">₱{total.toLocaleString()}</span>
               </div>
 
-              <button className="mt-8 w-full bg-[#c9a98a] text-white py-4 text-xs font-bold tracking-[0.3em] uppercase hover:bg-[#b8957a] transition rounded-xl">
+              <Link href="/order-confirmation" className="ripple-btn mt-8 block w-full bg-[#c9a98a] text-white py-4 text-xs font-bold tracking-[0.3em] uppercase hover:bg-[#b8957a] transition rounded-xl text-center">
                 Proceed to Checkout
-              </button>
+              </Link>
 
               <Link
                 href="/"

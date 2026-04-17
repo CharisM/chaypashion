@@ -5,10 +5,11 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { FiUser, FiSearch, FiShoppingCart, FiArrowLeft } from "react-icons/fi";
+import { FiUser, FiSearch, FiShoppingCart, FiArrowLeft, FiFacebook } from "react-icons/fi";
 import { supabase } from "@/lib/supabase";
 import { products } from "@/lib/products";
-import { addToCart } from "@/lib/cart";
+import { addToCart, getCart } from "@/lib/cart";
+import { motion } from "framer-motion";
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -20,7 +21,10 @@ export default function ProductDetail() {
   const [dropdown, setDropdown] = useState(false);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [cartMsg, setCartMsg] = useState("");
+  const [cartCount, setCartCount] = useState(0);
   const dropdownRef = useRef<HTMLLIElement>(null);
+
+  useEffect(() => { setCartCount(getCart().length); }, [loaded]);
 
   useEffect(() => {
     const getUser = async (user: any) => {
@@ -59,13 +63,14 @@ export default function ProductDetail() {
     await supabase.auth.signOut();
     setUsername(null);
     setDropdown(false);
-    router.push("/login");
+    router.push("/");
   };
 
   const handleAddToCart = () => {
     if (!selectedSize) { setCartMsg("Please select a size first."); return; }
     addToCart({ id: product!.id, name: product!.name, img: product!.img, price: product!.price, size: selectedSize, category: product!.category });
     setCartMsg(`✓ Added to cart — Size ${selectedSize}`);
+    setCartCount(getCart().length);
     setTimeout(() => setCartMsg(""), 3000);
   };
 
@@ -84,8 +89,16 @@ export default function ProductDetail() {
         <ul className="flex gap-8 text-sm font-medium items-center">
           <li><Link href="/">HOME</Link></li>
           <li><Link href="/about">ABOUT</Link></li>
-          <li><Link href="/contact">CONTACT US</Link></li>
-          <li><FiSearch className="text-lg cursor-pointer hover:opacity-70 transition" /></li>
+          <li>
+            <Link href="/cart" className="relative flex items-center hover:opacity-70 transition">
+              <FiShoppingCart className="text-xl" />
+              {loaded && username && cartCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                  {cartCount > 9 ? "9+" : cartCount}
+                </span>
+              )}
+            </Link>
+          </li>
           <li className="relative" ref={dropdownRef}>
             <button onClick={() => setDropdown(!dropdown)} className="flex items-center gap-2 hover:opacity-80 transition">
               <div className="w-9 h-9 rounded-full bg-black flex items-center justify-center">
@@ -98,7 +111,6 @@ export default function ProductDetail() {
                 {username ? (
                   <>
                     <Link href="/profile" onClick={() => setDropdown(false)} className="block px-4 py-2 text-sm hover:bg-gray-100">Profile</Link>
-                    <Link href="/cart" onClick={() => setDropdown(false)} className="block px-4 py-2 text-sm hover:bg-gray-100">My Cart</Link>
                     <button onClick={handleLogout} className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-100">Logout</button>
                   </>
                 ) : (
@@ -121,12 +133,22 @@ export default function ProductDetail() {
         <div className="grid grid-cols-2 gap-14">
 
           {/* IMAGE */}
-          <div className="bg-gray-50 overflow-hidden">
+          <motion.div
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6 }}
+            className="bg-gray-50 overflow-hidden"
+          >
             <img src={product.img} alt={product.name} className="w-full h-[500px] object-cover" />
-          </div>
+          </motion.div>
 
           {/* DETAILS */}
-          <div className="flex flex-col justify-center">
+          <motion.div
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6 }}
+            className="flex flex-col justify-center"
+          >
             <span className="text-xs tracking-[0.3em] text-gray-400 uppercase mb-2">{product.category}</span>
             <h1 className="text-3xl font-bold mb-3">{product.name}</h1>
             <p className="text-2xl font-semibold mb-5">₱{product.price.toLocaleString()}</p>
@@ -137,8 +159,9 @@ export default function ProductDetail() {
               <p className="text-sm font-semibold uppercase tracking-widest mb-3">Select Size</p>
               <div className="flex gap-3 flex-wrap">
                 {product.sizes.map((size) => (
-                  <button
+                  <motion.button
                     key={size}
+                    whileTap={{ scale: 0.9 }}
                     onClick={() => setSelectedSize(size)}
                     className={`w-12 h-12 border text-sm font-medium transition ${
                       selectedSize === size
@@ -147,7 +170,7 @@ export default function ProductDetail() {
                     }`}
                   >
                     {size}
-                  </button>
+                  </motion.button>
                 ))}
               </div>
             </div>
@@ -155,42 +178,67 @@ export default function ProductDetail() {
             {/* ADD TO CART */}
             <button
               onClick={handleAddToCart}
-              className="flex items-center justify-center gap-3 bg-black text-white py-4 text-sm font-semibold tracking-widest uppercase hover:bg-gray-800 transition"
+              className="ripple-btn flex items-center justify-center gap-3 bg-black text-white py-4 text-sm font-semibold tracking-widest uppercase hover:bg-gray-800 transition"
             >
               <FiShoppingCart className="text-lg" />
               Add to Cart
             </button>
 
             {cartMsg && (
-              <p className={`mt-3 text-sm ${cartMsg.startsWith("✓") ? "text-green-600" : "text-red-500"}`}>
+              <motion.p
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={`mt-3 text-sm ${cartMsg.startsWith("✓") ? "text-green-600" : "text-red-500"}`}
+              >
                 {cartMsg}
-              </p>
+              </motion.p>
             )}
-          </div>
+          </motion.div>
         </div>
       </div>
 
       {/* FOOTER */}
       <footer className="bg-black text-gray-400 pt-16 pb-8 px-16 mt-16">
-        <div className="grid grid-cols-2 gap-10 pb-12 border-b border-gray-800">
-          <div>
+        <div className="grid grid-cols-4 gap-10 pb-12 border-b border-gray-800">
+          <div className="col-span-1">
             <h2 className="text-white text-2xl font-serif italic mb-4">Chay Fashion</h2>
             <p className="text-sm leading-relaxed text-gray-500">Modern styles for everyday wear. Quality fashion made accessible for everyone.</p>
           </div>
           <div>
-            <h3 className="text-white text-xs tracking-[0.2em] uppercase mb-5">Company</h3>
+            <h3 className="text-white text-xs tracking-[0.2em] uppercase mb-5">Quick Links</h3>
             <ul className="space-y-3 text-sm">
+              <li><Link href="/" className="hover:text-white transition">Home</Link></li>
               <li><Link href="/about" className="hover:text-white transition">About Us</Link></li>
-              <li><Link href="/" className="hover:text-white transition">Shop</Link></li>
-              <li><Link href="/contact" className="hover:text-white transition">Contact</Link></li>
+            </ul>
+          </div>
+          <div>
+            <h3 className="text-white text-xs tracking-[0.2em] uppercase mb-5">Categories</h3>
+            <ul className="space-y-3 text-sm">
+              <li><Link href="/" className="hover:text-white transition">Dress</Link></li>
+              <li><Link href="/" className="hover:text-white transition">Watch</Link></li>
+              <li><Link href="/" className="hover:text-white transition">Herborist Scrub</Link></li>
+            </ul>
+          </div>
+          <div>
+            <h3 className="text-white text-xs tracking-[0.2em] uppercase mb-5">Account</h3>
+            <ul className="space-y-3 text-sm">
+              <li><Link href="/profile" className="hover:text-white transition">My Profile</Link></li>
+              <li><Link href="/cart" className="hover:text-white transition">My Cart</Link></li>
+              <li><Link href="/login" className="hover:text-white transition">Login</Link></li>
             </ul>
           </div>
         </div>
         <div className="pt-6 flex justify-between items-center text-xs text-gray-600">
           <p>© 2026 Chay Fashion. All rights reserved.</p>
-          <div className="flex gap-6">
-            <span className="hover:text-white transition cursor-pointer">Privacy Policy</span>
-            <span className="hover:text-white transition cursor-pointer">Terms of Service</span>
+          <div className="flex items-center gap-6">
+            <a href="https://www.facebook.com/profile.php?id=61578244202994" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-white hover:text-blue-400 transition">
+              <FiFacebook className="text-lg" />
+              <span className="text-sm font-medium">Chay Pasion</span>
+            </a>
+            <span className="text-gray-600">|</span>
+            <Link href="/privacy-policy" className="text-gray-300 hover:text-white transition">Privacy Policy</Link>
+            <span className="text-gray-600">|</span>
+            <Link href="/terms-of-service" className="text-gray-300 hover:text-white transition">Terms of Service</Link>
           </div>
         </div>
       </footer>
