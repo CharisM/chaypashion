@@ -5,10 +5,10 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { FiSearch, FiUser, FiShoppingCart, FiFacebook, FiMapPin, FiPhone, FiMail } from "react-icons/fi";
+import { FiSearch, FiUser, FiShoppingCart, FiFacebook, FiMapPin, FiPhone, FiMail, FiShoppingBag } from "react-icons/fi";
 import { supabase } from "@/lib/supabase";
 import { products } from "@/lib/products";
-import { getCart } from "@/lib/cart";
+import { getCart, addToCart } from "@/lib/cart";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function ShopPage() {
@@ -19,6 +19,7 @@ export default function ShopPage() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
   const [cartCount, setCartCount] = useState(0);
+  const [addedId, setAddedId] = useState<number | null>(null);
   const dropdownRef = useRef<HTMLLIElement>(null);
 
   const filteredProducts = filter === "All"
@@ -28,6 +29,14 @@ export default function ShopPage() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (search.trim()) router.push(`/search?q=${encodeURIComponent(search.trim())}`);
+  };
+
+  const handleAddToCart = (item: typeof products[0]) => {
+    if (!username) { router.push("/login"); return; }
+    addToCart({ id: item.id, name: item.name, img: item.img, price: item.price, size: item.sizes[0], category: item.category });
+    setCartCount(getCart().length);
+    setAddedId(item.id);
+    setTimeout(() => setAddedId(null), 2000);
   };
 
   const handleLogout = async () => {
@@ -175,24 +184,32 @@ export default function ShopPage() {
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.35, delay: i * 0.04 }}
               >
-                <Link href={`/product/${item.id}`}>
-                  <div className="group relative overflow-hidden bg-white cursor-pointer shadow-sm hover:shadow-lg transition duration-300">
+                <div className="group relative overflow-hidden bg-white cursor-pointer shadow-sm hover:shadow-lg transition duration-300">
+                  <Link href={`/product/${item.id}`}>
                     <div className="overflow-hidden">
                       <img src={item.img} alt={item.name} className="w-full h-[280px] object-cover transition-transform duration-700 group-hover:scale-110" />
                     </div>
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition duration-300" />
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition duration-300">
-                      <span className="bg-white text-black text-xs font-bold px-6 py-2.5 tracking-[0.2em] uppercase shadow-md">View Item</span>
-                    </div>
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition duration-300" />
                     <div className="absolute top-3 left-3 bg-white/90 text-[10px] tracking-widest uppercase px-2 py-1 font-semibold text-gray-600">
                       {item.category}
                     </div>
-                    <div className="p-4 border-t border-gray-100">
-                      <p className="text-sm font-semibold text-gray-800 truncate">{item.name}</p>
-                      <p className="text-sm font-bold text-[#c9a98a] mt-1">₱{item.price.toLocaleString()}</p>
-                    </div>
+                  </Link>
+                  <div className="p-4 border-t border-gray-100">
+                    <p className="text-sm font-semibold text-gray-800 truncate">{item.name}</p>
+                    <p className="text-sm font-bold text-[#c9a98a] mt-1">₱{item.price.toLocaleString()}</p>
+                    <button
+                      onClick={() => handleAddToCart(item)}
+                      className={`mt-3 w-full py-2 text-xs font-bold tracking-widest uppercase transition rounded-lg flex items-center justify-center gap-2 ${
+                        addedId === item.id
+                          ? "bg-green-500 text-white"
+                          : "bg-black text-white hover:bg-gray-800"
+                      }`}
+                    >
+                      <FiShoppingBag className="text-sm" />
+                      {addedId === item.id ? "Added!" : "Add to Cart"}
+                    </button>
                   </div>
-                </Link>
+                </div>
               </motion.div>
             ))}
           </div>
