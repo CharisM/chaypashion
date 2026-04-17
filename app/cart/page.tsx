@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { FiShoppingBag, FiTrash2, FiArrowLeft, FiEdit2, FiCheck, FiX, FiSearch, FiUser, FiShoppingCart } from "react-icons/fi";
+import { FiShoppingBag, FiEdit2, FiCheck, FiX, FiSearch, FiUser, FiShoppingCart, FiArrowRight, FiTag } from "react-icons/fi";
 import Link from "next/link";
 import { getCart, removeFromCart, updateCartItem, CartItem } from "@/lib/cart";
 import { products } from "@/lib/products";
@@ -71,28 +71,27 @@ export default function CartPage() {
   };
 
   const getSizes = (itemId: number) => products.find((p) => p.id === itemId)?.sizes ?? [];
-
   const subtotal = cart.reduce((sum, item) => sum + item.price, 0);
   const shipping = cart.length > 0 ? 150 : 0;
   const total = subtotal + shipping;
 
   return (
-    <div className="min-h-screen bg-[#faf7f4]">
+    <div className="min-h-screen bg-white">
 
       {/* NAVBAR */}
-      <nav className="flex justify-between items-center px-12 py-4 bg-white shadow-sm">
-        <Link href="/" className="text-3xl font-serif italic text-[#2c2c2c]">Chay Fashion</Link>
+      <nav className="flex justify-between items-center px-12 py-4 bg-white border-b border-gray-100">
+        <Link href="/" className="text-3xl font-serif italic">Chay Fashion</Link>
         <ul className="flex gap-8 text-sm font-medium items-center">
           <li>
-            <form onSubmit={handleSearch} className="flex items-center border border-gray-300 rounded-full px-3 py-1.5 gap-2 hover:border-gray-500 transition">
+            <form onSubmit={handleSearch} className="flex items-center border border-gray-200 rounded-full px-3 py-1.5 gap-2 hover:border-gray-400 transition">
               <FiSearch className="text-gray-400 text-sm shrink-0" />
               <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search products..." className="text-xs outline-none bg-transparent w-36 placeholder-gray-400" />
             </form>
           </li>
-          <li><Link href="/">HOME</Link></li>
-          <li><Link href="/about">ABOUT</Link></li>
+          <li><Link href="/" className="hover:text-gray-500 transition">HOME</Link></li>
+          <li><Link href="/about" className="hover:text-gray-500 transition">ABOUT</Link></li>
           <li>
-            <Link href="/cart" className="relative flex items-center hover:opacity-70 transition">
+            <Link href="/cart" className="relative flex items-center">
               <FiShoppingCart className="text-xl" />
               {cart.length > 0 && (
                 <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
@@ -118,177 +117,203 @@ export default function CartPage() {
         </ul>
       </nav>
 
-      <div className="max-w-5xl mx-auto px-6 py-14">
+      {cart.length === 0 ? (
 
-        {/* HEADER */}
-        <div className="flex items-end justify-between mb-10">
-          <div>
-            <p className="text-xs tracking-[0.4em] text-[#b5a99f] uppercase mb-1">Your Selection</p>
-            <h1 className="text-4xl font-bold tracking-tight text-[#2c2c2c]">Shopping Cart</h1>
-          </div>
-          {cart.length > 0 && (
-            <span className="text-sm text-[#9a8c82]">{cart.length} item{cart.length !== 1 ? "s" : ""}</span>
-          )}
+        /* EMPTY STATE */
+        <div className="flex flex-col items-center justify-center min-h-[70vh] gap-6">
+          <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.5 }} className="relative">
+            <div className="w-32 h-32 rounded-full bg-gray-50 border-2 border-dashed border-gray-200 flex items-center justify-center">
+              <FiShoppingBag className="text-5xl text-gray-300" />
+            </div>
+            <div className="absolute -top-2 -right-2 w-8 h-8 bg-black rounded-full flex items-center justify-center">
+              <span className="text-white text-xs font-bold">0</span>
+            </div>
+          </motion.div>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }} className="text-center">
+            <h2 className="text-2xl font-bold text-gray-800">Your cart is empty</h2>
+            <p className="text-gray-400 text-sm mt-2">Discover our latest collection and add your favorites.</p>
+          </motion.div>
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }}>
+            <Link href="/shop" className="flex items-center gap-2 bg-black text-white px-8 py-3 text-sm font-semibold tracking-widest uppercase hover:bg-gray-800 transition">
+              Browse Collection <FiArrowRight />
+            </Link>
+          </motion.div>
         </div>
 
-        {cart.length === 0 ? (
+      ) : (
 
-          /* EMPTY STATE */
-          <div className="bg-white border border-[#e8e0d8] rounded-3xl flex flex-col items-center justify-center py-32 gap-5">
-            <div className="w-20 h-20 rounded-full bg-[#f5ede6] flex items-center justify-center">
-              <FiShoppingBag className="text-3xl text-[#c9a98a]" />
+        /* SPLIT LAYOUT */
+        <div className="flex min-h-[calc(100vh-73px)]">
+
+          {/* LEFT — ITEMS */}
+          <div className="flex-1 px-12 py-10 overflow-y-auto border-r border-gray-100">
+
+            {/* HEADER */}
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h1 className="text-2xl font-bold">Shopping Cart</h1>
+                <p className="text-gray-400 text-sm mt-0.5">{cart.length} item{cart.length !== 1 ? "s" : ""} in your bag</p>
+              </div>
+              <Link href="/shop" className="text-xs text-gray-400 hover:text-black transition underline underline-offset-2">
+                Continue Shopping
+              </Link>
             </div>
-            <div className="text-center">
-              <p className="text-[#2c2c2c] font-semibold text-lg">Your cart is empty</p>
-              <p className="text-[#9a8c82] text-sm mt-1">Looks like you haven't added anything yet.</p>
+
+            {/* DIVIDER */}
+            <div className="grid grid-cols-4 text-[10px] tracking-widest uppercase text-gray-400 pb-3 border-b border-gray-100 mb-4">
+              <span className="col-span-2">Product</span>
+              <span className="text-center">Size</span>
+              <span className="text-right">Price</span>
             </div>
-            <Link
-              href="/"
-              className="mt-2 bg-[#c9a98a] text-white text-xs px-10 py-3 tracking-[0.3em] uppercase hover:bg-[#b8957a] transition rounded-full"
-            >
-              Explore Collection
-            </Link>
-          </div>
 
-        ) : (
-          <div className="grid grid-cols-5 gap-8 items-start">
-
-            {/* ITEMS LIST */}
-            <div className="col-span-3 space-y-4">
-              <AnimatePresence>
+            {/* CART ITEMS */}
+            <AnimatePresence>
               {cart.map((item, index) => {
                 const isEditing = editingIndex === index;
                 const sizes = getSizes(item.id);
                 return (
                   <motion.div
                     key={index}
-                    initial={{ opacity: 0, x: -30 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 30, height: 0 }}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, height: 0, marginBottom: 0 }}
                     transition={{ duration: 0.3, delay: index * 0.05 }}
-                    className="group bg-white border border-[#e8e0d8] rounded-2xl overflow-hidden flex hover:shadow-md hover:border-[#c9a98a] transition duration-300"
+                    className="group grid grid-cols-4 items-center gap-4 py-5 border-b border-gray-50 hover:bg-gray-50/50 transition rounded-xl px-2"
                   >
-                    {/* IMAGE */}
-                    <div className="w-32 shrink-0 overflow-hidden">
-                      <img
-                        src={item.img}
-                        alt={item.name}
-                        className="w-full h-full object-cover min-h-[148px] group-hover:scale-105 transition duration-500"
-                      />
-                    </div>
-
-                    {/* DETAILS */}
-                    <div className="flex-1 px-5 py-4 flex flex-col justify-between">
-                      <div>
-                        <span className="text-[10px] tracking-[0.3em] text-[#c9a98a] uppercase font-medium">{item.category}</span>
-                        <p className="text-sm font-semibold mt-0.5 text-[#2c2c2c]">{item.name}</p>
-
-                        {isEditing ? (
-                          <div className="mt-3">
-                            <p className="text-[10px] tracking-widest text-[#9a8c82] uppercase mb-2">Change Size</p>
-                            <div className="flex gap-2 flex-wrap">
-                              {sizes.map((s) => (
-                                <button
-                                  key={s}
-                                  onClick={() => setEditSize(s)}
-                                  className={`w-9 h-9 text-xs font-medium border rounded transition ${
-                                    editSize === s
-                                      ? "bg-[#c9a98a] text-white border-[#c9a98a]"
-                                      : "bg-white text-[#2c2c2c] border-[#e8e0d8] hover:border-[#c9a98a] hover:text-[#c9a98a]"
-                                  }`}
-                                >
-                                  {s}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="mt-2 flex items-center gap-2">
-                            <span className="text-[10px] tracking-widest text-[#9a8c82] uppercase">Size</span>
-                            <span className="text-xs font-bold bg-[#f5ede6] text-[#c9a98a] px-2 py-0.5 rounded">{item.size}</span>
-                          </div>
-                        )}
-                      </div>
-
-                      <p className="text-base font-bold text-[#2c2c2c] mt-3">₱{item.price.toLocaleString()}</p>
-                    </div>
-
-                    {/* ACTIONS */}
-                    <div className="flex flex-col justify-between items-end px-4 py-4">
-                      <button
-                        onClick={() => handleRemove(index)}
-                        className="text-[#d4b8ae] hover:text-red-400 transition"
-                        title="Remove"
-                      >
-                        <FiX className="text-lg" />
-                      </button>
-
-                      {isEditing ? (
+                    {/* PRODUCT */}
+                    <div className="col-span-2 flex items-center gap-4">
+                      <div className="relative w-20 h-20 shrink-0 overflow-hidden rounded-xl bg-gray-100">
+                        <img src={item.img} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
                         <button
-                          onClick={() => handleSave(index)}
-                          className="flex items-center gap-1 text-xs text-white bg-[#c9a98a] hover:bg-[#b8957a] transition px-3 py-1.5 rounded-full"
+                          onClick={() => handleRemove(index)}
+                          className="absolute top-1 right-1 w-5 h-5 bg-white rounded-full shadow flex items-center justify-center opacity-0 group-hover:opacity-100 transition hover:bg-red-50"
                         >
-                          <FiCheck /> Save
+                          <FiX className="text-red-400 text-xs" />
                         </button>
+                      </div>
+                      <div className="min-w-0">
+                        <span className="text-[10px] tracking-widest text-gray-400 uppercase">{item.category}</span>
+                        <p className="text-sm font-semibold text-gray-800 truncate mt-0.5">{item.name}</p>
+                      </div>
+                    </div>
+
+                    {/* SIZE */}
+                    <div className="text-center">
+                      {isEditing ? (
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="flex gap-1 flex-wrap justify-center">
+                            {sizes.map((s) => (
+                              <button
+                                key={s}
+                                onClick={() => setEditSize(s)}
+                                className={`w-8 h-8 text-[10px] font-bold border transition rounded ${
+                                  editSize === s ? "bg-black text-white border-black" : "border-gray-200 hover:border-black"
+                                }`}
+                              >
+                                {s}
+                              </button>
+                            ))}
+                          </div>
+                          <button onClick={() => handleSave(index)} className="flex items-center gap-1 text-[10px] text-green-600 font-semibold hover:text-green-700 transition">
+                            <FiCheck /> Save
+                          </button>
+                        </div>
                       ) : (
                         <button
                           onClick={() => handleEdit(index)}
-                          className="flex items-center gap-1 text-xs text-[#9a8c82] hover:text-[#c9a98a] transition border border-[#e8e0d8] hover:border-[#c9a98a] px-3 py-1.5 rounded-full"
+                          className="inline-flex items-center gap-1 border border-gray-200 rounded-full px-3 py-1 text-xs font-medium hover:border-black transition"
                         >
-                          <FiEdit2 /> Edit
+                          {item.size} <FiEdit2 className="text-[10px] text-gray-400" />
                         </button>
                       )}
+                    </div>
+
+                    {/* PRICE */}
+                    <div className="text-right">
+                      <p className="text-sm font-bold text-gray-800">₱{item.price.toLocaleString()}</p>
                     </div>
                   </motion.div>
                 );
               })}
-              </AnimatePresence>
-            </div>
-
-            {/* ORDER SUMMARY */}
-            <div className="col-span-2 bg-white border border-[#e8e0d8] rounded-2xl p-7 sticky top-6">
-
-              <p className="text-[10px] tracking-[0.4em] uppercase text-[#b5a99f] mb-6">Order Summary</p>
-
-              <div className="space-y-4 text-sm">
-                <div className="flex justify-between text-[#9a8c82]">
-                  <span>Subtotal</span>
-                  <span>₱{subtotal.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between text-[#9a8c82]">
-                  <span>Shipping</span>
-                  <span>₱{shipping.toLocaleString()}</span>
-                </div>
-              </div>
-
-              <div className="my-5 border-t border-[#e8e0d8]" />
-
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-semibold text-[#2c2c2c]">Total</span>
-                <span className="text-xl font-bold text-[#2c2c2c]">₱{total.toLocaleString()}</span>
-              </div>
-
-              <Link href="/order-confirmation" className="ripple-btn mt-8 block w-full bg-[#c9a98a] text-white py-4 text-xs font-bold tracking-[0.3em] uppercase hover:bg-[#b8957a] transition rounded-xl text-center">
-                Proceed to Checkout
-              </Link>
-
-              <Link
-                href="/"
-                className="block text-center mt-4 text-xs text-[#b5a99f] hover:text-[#c9a98a] transition tracking-widest uppercase"
-              >
-                Continue Shopping
-              </Link>
-
-              <div className="mt-8 pt-5 border-t border-[#f0e8e0] flex items-center gap-3">
-                <div className="h-px flex-1 bg-[#f0e8e0]" />
-                <span className="text-[10px] tracking-widest text-[#c9b8ae] uppercase font-serif italic">Chay Fashion</span>
-                <div className="h-px flex-1 bg-[#f0e8e0]" />
-              </div>
-            </div>
-
+            </AnimatePresence>
           </div>
-        )}
-      </div>
+
+          {/* RIGHT — ORDER SUMMARY */}
+          <div className="w-96 shrink-0 bg-[#faf9f7] px-10 py-10 flex flex-col">
+
+            <h2 className="text-lg font-bold mb-8">Order Summary</h2>
+
+            {/* ITEM PREVIEWS */}
+            <div className="flex gap-2 mb-8 flex-wrap">
+              {cart.slice(0, 4).map((item, i) => (
+                <div key={i} className="w-12 h-12 rounded-lg overflow-hidden border-2 border-white shadow-sm">
+                  <img src={item.img} alt={item.name} className="w-full h-full object-cover" />
+                </div>
+              ))}
+              {cart.length > 4 && (
+                <div className="w-12 h-12 rounded-lg bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-500">
+                  +{cart.length - 4}
+                </div>
+              )}
+            </div>
+
+            {/* PRICE BREAKDOWN */}
+            <div className="space-y-3 text-sm mb-6">
+              <div className="flex justify-between text-gray-500">
+                <span>Subtotal ({cart.length} items)</span>
+                <span>₱{subtotal.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between text-gray-500">
+                <span>Shipping</span>
+                <span>₱{shipping.toLocaleString()}</span>
+              </div>
+            </div>
+
+            <div className="border-t border-gray-200 pt-4 mb-8">
+              <div className="flex justify-between items-center">
+                <span className="font-bold text-gray-800">Total</span>
+                <span className="text-2xl font-bold text-gray-800">₱{total.toLocaleString()}</span>
+              </div>
+            </div>
+
+            {/* PROMO CODE */}
+            <div className="flex gap-2 mb-8">
+              <div className="flex-1 flex items-center gap-2 border border-gray-200 rounded-xl px-3 py-2 bg-white">
+                <FiTag className="text-gray-400 text-sm shrink-0" />
+                <input type="text" placeholder="Promo code" className="text-xs outline-none bg-transparent flex-1 placeholder-gray-400" />
+              </div>
+              <button className="bg-black text-white text-xs px-4 rounded-xl font-semibold hover:bg-gray-800 transition">Apply</button>
+            </div>
+
+            {/* CHECKOUT */}
+            <Link
+              href="/order-confirmation"
+              className="w-full bg-black text-white py-4 text-sm font-bold tracking-widest uppercase hover:bg-gray-800 transition flex items-center justify-center gap-3 rounded-xl"
+            >
+              Proceed to Checkout <FiArrowRight />
+            </Link>
+
+            {/* TRUST BADGES */}
+            <div className="mt-8 pt-6 border-t border-gray-200 grid grid-cols-3 gap-3 text-center">
+              {[
+                { icon: "🔒", label: "Secure Payment" },
+                { icon: "🚚", label: "Fast Delivery" },
+                { icon: "↩️", label: "Easy Returns" },
+              ].map((b) => (
+                <div key={b.label} className="flex flex-col items-center gap-1">
+                  <span className="text-lg">{b.icon}</span>
+                  <span className="text-[10px] text-gray-400 leading-tight">{b.label}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-auto pt-8 text-center">
+              <p className="text-[10px] tracking-widest text-gray-300 uppercase font-serif italic">Chay Fashion</p>
+            </div>
+          </div>
+
+        </div>
+      )}
     </div>
   );
 }
