@@ -1,3 +1,5 @@
+import { CartItem } from "@/lib/cart";
+
 // Add your admin email here
 export const ADMIN_EMAIL = "chayfashion.admin@gmail.com";
 
