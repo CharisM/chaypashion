@@ -16,14 +16,8 @@ export default function Login() {
 
   const handleLogin = async () => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-
-    if (error) {
-      alert(error.message);
-      return;
-    }
-
-    alert("Login successful!");
-    router.push("/");
+    if (error) { alert(error.message); return; }
+    setTimeout(() => router.replace("/"), 100);
   };
 
   return (

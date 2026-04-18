@@ -16,6 +16,7 @@ export default function About() {
   const [dropdown, setDropdown] = useState(false);
   const [search, setSearch] = useState("");
   const [cartCount, setCartCount] = useState(0);
+  const [userId, setUserId] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLLIElement>(null);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -28,6 +29,8 @@ export default function About() {
       if (user) {
         const { data } = await supabase.from("profiles").select("username").eq("id", user.id).single();
         setUsername(data?.username ?? user.email ?? null);
+        setUserId(user.id);
+        setCartCount(getCart(user.id).length);
       } else {
         setUsername(null);
       }
@@ -46,7 +49,7 @@ export default function About() {
     return () => subscription.unsubscribe();
   }, []);
 
-  useEffect(() => { setCartCount(getCart().length); }, []);
+  useEffect(() => { setCartCount(getCart(userId ?? undefined).length); }, [userId]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -101,6 +104,7 @@ export default function About() {
                 {username ? (
                   <>
                     <Link href="/profile" onClick={() => setDropdown(false)} className="block px-4 py-2 text-sm hover:bg-gray-100">Profile</Link>
+                    <Link href="/orders" onClick={() => setDropdown(false)} className="block px-4 py-2 text-sm hover:bg-gray-100">My Orders</Link>
                     <button onClick={handleLogout} className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-100">Logout</button>
                   </>
                 ) : (

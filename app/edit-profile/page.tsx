@@ -21,7 +21,7 @@ export default function EditProfilePage() {
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setTimeout(() => router.push("/login"), 0); return; }
-      const { data } = await supabase.from("profiles").select("username, phone").eq("id", user.id).single();
+      const { data } = await supabase.from("profiles").select("username, phone, email").eq("id", user.id).single();
       if (data) { setUsername(data.username ?? ""); setPhone(data.phone ?? ""); }
     };
     load();

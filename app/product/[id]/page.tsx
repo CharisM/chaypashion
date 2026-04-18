@@ -22,9 +22,13 @@ export default function ProductDetail() {
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [cartMsg, setCartMsg] = useState("");
   const [cartCount, setCartCount] = useState(0);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [selectedVariant, setSelectedVariant] = useState(0);
   const dropdownRef = useRef<HTMLLIElement>(null);
 
-  useEffect(() => { setCartCount(getCart().length); }, [loaded]);
+  const currentImg = product?.variants ? product.variants[selectedVariant].img : product?.img;
+
+  useEffect(() => { setCartCount(getCart(userId ?? undefined).length); }, [loaded, userId]);
 
   useEffect(() => {
     const getUser = async (user: any) => {
@@ -35,6 +39,7 @@ export default function ProductDetail() {
         setUsername(null);
       }
       setLoaded(true);
+      setUserId(user?.id ?? null);
     };
 
     supabase.auth.getSession().then(({ data: { session }, error }) => {
@@ -67,10 +72,19 @@ export default function ProductDetail() {
   };
 
   const handleAddToCart = () => {
-    if (!selectedSize) { setCartMsg("Please select a size first."); return; }
-    addToCart({ id: product!.id, name: product!.name, img: product!.img, price: product!.price, size: selectedSize, category: product!.category });
-    setCartMsg(`✓ Added to cart — Size ${selectedSize}`);
-    setCartCount(getCart().length);
+    if (product!.category !== "Dress" && !selectedSize) { setCartMsg("Please select a size first."); return; }
+    const selectedColor = product!.variants ? product!.variants[selectedVariant].color : undefined;
+    const cartImg = product!.variants ? product!.variants[selectedVariant].img : product!.img;
+    addToCart({
+      id: product!.id,
+      name: product!.name + (selectedColor ? ` (${selectedColor})` : ""),
+      img: cartImg,
+      price: product!.price,
+      size: product!.category === "Dress" ? "Free Size" : (selectedSize ?? product!.sizes[0]),
+      category: product!.category
+    }, userId ?? undefined);
+    setCartMsg(`✓ Added to cart!`);
+    setCartCount(getCart(userId ?? undefined).length);
     setTimeout(() => setCartMsg(""), 3000);
   };
 
@@ -111,6 +125,7 @@ export default function ProductDetail() {
                 {username ? (
                   <>
                     <Link href="/profile" onClick={() => setDropdown(false)} className="block px-4 py-2 text-sm hover:bg-gray-100">Profile</Link>
+                    <Link href="/orders" onClick={() => setDropdown(false)} className="block px-4 py-2 text-sm hover:bg-gray-100">My Orders</Link>
                     <button onClick={handleLogout} className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-100">Logout</button>
                   </>
                 ) : (
@@ -139,7 +154,7 @@ export default function ProductDetail() {
             transition={{ duration: 0.6 }}
             className="bg-gray-50 overflow-hidden"
           >
-            <img src={product.img} alt={product.name} className="w-full h-[500px] object-cover" />
+            <img src={currentImg} alt={product.name} className="w-full h-[500px] object-cover" />
           </motion.div>
 
           {/* DETAILS */}
@@ -154,26 +169,71 @@ export default function ProductDetail() {
             <p className="text-2xl font-semibold mb-5">₱{product.price.toLocaleString()}</p>
             <p className="text-gray-500 text-sm leading-relaxed mb-8">{product.description}</p>
 
-            {/* SIZE */}
-            <div className="mb-8">
-              <p className="text-sm font-semibold uppercase tracking-widest mb-3">Select Size</p>
-              <div className="flex gap-3 flex-wrap">
-                {product.sizes.map((size) => (
-                  <motion.button
-                    key={size}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => setSelectedSize(size)}
-                    className={`w-12 h-12 border text-sm font-medium transition ${
-                      selectedSize === size
-                        ? "bg-black text-white border-black"
-                        : "bg-white text-black border-gray-300 hover:border-black"
-                    }`}
-                  >
-                    {size}
-                  </motion.button>
-                ))}
+            {/* COLOR VARIANTS */}
+            {product.variants && product.variants.length > 0 && (
+              <div className="mb-8">
+                <p className="text-sm font-semibold uppercase tracking-widest mb-3">
+                  Color: <span className="font-normal text-gray-500">{product.variants[selectedVariant].color}</span>
+                </p>
+                <div className="flex gap-3 flex-wrap">
+                  {product.variants.map((variant, i) => (
+                    <motion.button
+                      key={i}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => setSelectedVariant(i)}
+                      className={`flex items-center gap-2 px-4 py-2 border text-sm font-medium transition rounded-lg ${
+                        selectedVariant === i
+                          ? "border-black bg-black text-white"
+                          : "border-gray-200 hover:border-black text-gray-700"
+                      }`}
+                    >
+                      <img src={variant.img} alt={variant.color} className="w-8 h-8 object-cover rounded" />
+                      {variant.color}
+                    </motion.button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
+
+            {/* MEASUREMENTS FOR DRESS / SIZE SELECTOR FOR OTHERS */}
+            {product.category === "Dress" ? (
+              <div className="mb-8">
+                <p className="text-sm font-semibold uppercase tracking-widest mb-4">Measurements</p>
+                <div className="grid grid-cols-3 gap-3">
+                  {[
+                    { label: "Bust", value: product.measurements?.bust },
+                    { label: "Waist", value: product.measurements?.waist },
+                    { label: "Length", value: product.measurements?.length },
+                  ].map((m) => (
+                    <div key={m.label} className="border border-gray-100 rounded-xl p-4 text-center bg-gray-50">
+                      <p className="text-[10px] tracking-widest uppercase text-gray-400 mb-1">{m.label}</p>
+                      <p className="text-sm font-bold text-gray-800">{m.value}</p>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-400 mt-3">* This is a unique piece — one item only.</p>
+              </div>
+            ) : (
+              <div className="mb-8">
+                <p className="text-sm font-semibold uppercase tracking-widest mb-3">Select Size</p>
+                <div className="flex gap-3 flex-wrap">
+                  {product.sizes.map((size) => (
+                    <motion.button
+                      key={size}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => setSelectedSize(size)}
+                      className={`w-12 h-12 border text-sm font-medium transition ${
+                        selectedSize === size
+                          ? "bg-black text-white border-black"
+                          : "bg-white text-black border-gray-300 hover:border-black"
+                      }`}
+                    >
+                      {size}
+                    </motion.button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* ADD TO CART */}
             <button

@@ -29,20 +29,22 @@ export default function Signup() {
     const { data, error } = await supabase.auth.signUp({ email, password });
 
     if (error) {
-      alert(`Signup failed: ${error.message} (status: ${error.status})`);
+      alert(`Signup failed: ${error.message}`);
       return;
     }
 
     if (data.user) {
-      await supabase.from("profiles").insert({
+      await supabase.from("profiles").upsert({
         id: data.user.id,
         username,
+        email,
         phone: number,
+        location,
       });
     }
 
     alert("Account created! Please check your email to confirm.");
-    router.push("/login");
+    setTimeout(() => router.push("/login"), 100);
   };
 
   return (

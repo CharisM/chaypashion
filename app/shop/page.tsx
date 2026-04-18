@@ -20,6 +20,7 @@ export default function ShopPage() {
   const [filter, setFilter] = useState("All");
   const [cartCount, setCartCount] = useState(0);
   const [addedId, setAddedId] = useState<number | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLLIElement>(null);
 
   const filteredProducts = filter === "All"
@@ -33,8 +34,8 @@ export default function ShopPage() {
 
   const handleAddToCart = (item: typeof products[0]) => {
     if (!username) { router.push("/login"); return; }
-    addToCart({ id: item.id, name: item.name, img: item.img, price: item.price, size: item.sizes[0], category: item.category });
-    setCartCount(getCart().length);
+    addToCart({ id: item.id, name: item.name, img: item.img, price: item.price, size: item.sizes[0], category: item.category }, userId ?? undefined);
+    setCartCount(getCart(userId ?? undefined).length);
     setAddedId(item.id);
     setTimeout(() => setAddedId(null), 2000);
   };
@@ -51,6 +52,7 @@ export default function ShopPage() {
       if (user) {
         const { data } = await supabase.from("profiles").select("username").eq("id", user.id).single();
         setUsername(data?.username ?? user.email ?? null);
+        setUserId(user.id);
       } else {
         setUsername(null);
       }
@@ -70,7 +72,7 @@ export default function ShopPage() {
     return () => subscription.unsubscribe();
   }, []);
 
-  useEffect(() => { setCartCount(getCart().length); }, [loaded]);
+  useEffect(() => { setCartCount(getCart(userId ?? undefined).length); }, [loaded, userId]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -118,6 +120,7 @@ export default function ShopPage() {
                 {username ? (
                   <>
                     <Link href="/profile" onClick={() => setDropdown(false)} className="block px-4 py-2 text-sm hover:bg-gray-100">Profile</Link>
+                    <Link href="/orders" onClick={() => setDropdown(false)} className="block px-4 py-2 text-sm hover:bg-gray-100">My Orders</Link>
                     <button onClick={handleLogout} className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-100">Logout</button>
                   </>
                 ) : (
@@ -190,9 +193,6 @@ export default function ShopPage() {
                       <img src={item.img} alt={item.name} className="w-full h-[280px] object-cover transition-transform duration-700 group-hover:scale-110" />
                     </div>
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition duration-300" />
-                    <div className="absolute top-3 left-3 bg-white/90 text-[10px] tracking-widest uppercase px-2 py-1 font-semibold text-gray-600">
-                      {item.category}
-                    </div>
                   </Link>
                   <div className="p-4 border-t border-gray-100">
                     <p className="text-sm font-semibold text-gray-800 truncate">{item.name}</p>

@@ -12,8 +12,7 @@ import { getCart } from "@/lib/cart";
 
 export default function Profile() {
   const router = useRouter();
-  const [profile, setProfile] = useState<{ username: string; phone: string } | null>(null);
-  const [email, setEmail] = useState("");
+  const [profile, setProfile] = useState<{ username: string; phone: string; email: string } | null>(null);
   const [search, setSearch] = useState("");
   const [dropdown, setDropdown] = useState(false);
   const [username, setUsername] = useState<string | null>(null);
@@ -34,8 +33,7 @@ export default function Profile() {
     const getProfile = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setTimeout(() => router.push("/login"), 0); return; }
-      setEmail(user.email ?? "");
-      const { data } = await supabase.from("profiles").select("username, phone").eq("id", user.id).single();
+      const { data } = await supabase.from("profiles").select("username, phone, email").eq("id", user.id).single();
       setProfile(data);
     };
     getProfile();
@@ -94,6 +92,7 @@ export default function Profile() {
             {dropdown && (
               <div className="absolute right-0 mt-2 w-44 bg-white border rounded-xl shadow-lg z-[999] overflow-hidden">
                 <Link href="/profile" onClick={() => setDropdown(false)} className="block px-4 py-2 text-sm hover:bg-gray-100">Profile</Link>
+                <Link href="/orders" onClick={() => setDropdown(false)} className="block px-4 py-2 text-sm hover:bg-gray-100">My Orders</Link>
                 <button onClick={handleLogout} className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-100">Logout</button>
               </div>
             )}
@@ -142,7 +141,7 @@ export default function Profile() {
               </div>
               <div>
                 <p className="text-xs text-gray-400 mb-0.5">Email Address</p>
-                <p className="text-sm font-semibold">{email || "—"}</p>
+                <p className="text-sm font-semibold">{profile?.email || "—"}</p>
               </div>
             </div>
             <div className="flex items-center gap-4 px-6 py-5">

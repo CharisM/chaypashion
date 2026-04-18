@@ -6,6 +6,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { FiCheckCircle, FiFacebook, FiShoppingBag } from "react-icons/fi";
 import { getCart, CartItem } from "@/lib/cart";
+import { saveOrder, clearCart } from "@/lib/orders";
+import { supabase } from "@/lib/supabase";
 import { motion } from "framer-motion";
 
 export default function OrderConfirmationPage() {
@@ -13,12 +15,33 @@ export default function OrderConfirmationPage() {
   const [orderNumber, setOrderNumber] = useState("");
 
   useEffect(() => {
-    setItems(getCart());
-    setOrderNumber("CF-" + Math.random().toString(36).substring(2, 8).toUpperCase());
+    const load = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      const userId = user?.id;
+      const cartItems = getCart(userId);
+      if (cartItems.length === 0) return;
+      const num = "CF-" + Math.random().toString(36).substring(2, 8).toUpperCase();
+      const subtotalAmt = cartItems.reduce((sum, item) => sum + item.price, 0);
+      const order = {
+        orderNumber: num,
+        items: cartItems,
+        subtotal: subtotalAmt,
+        shipping: 150,
+        total: subtotalAmt + 150,
+        date: new Date().toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" }),
+        expectedDelivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" }),
+        delivered: false,
+      };
+      saveOrder(order);
+      clearCart(userId);
+      setItems(cartItems);
+      setOrderNumber(num);
+    };
+    load();
   }, []);
 
   const subtotal = items.reduce((sum, item) => sum + item.price, 0);
-  const shipping = 150;
+  const shipping = items.length > 0 ? 150 : 0;
   const total = subtotal + shipping;
 
   return (
