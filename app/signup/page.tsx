@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { FiMail, FiLock, FiUser, FiPhone, FiCheckCircle } from "react-icons/fi";
+import { FiMail, FiLock, FiUser, FiPhone, FiCheckCircle, FiEye, FiEyeOff } from "react-icons/fi";
 import { supabase } from "@/lib/supabase";
 
 const getPasswordStrength = (pw: string) => {
@@ -32,6 +32,8 @@ export default function Signup() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [confirmed, setConfirmed] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const strength = getPasswordStrength(password);
 
@@ -136,7 +138,10 @@ export default function Signup() {
         <div className="mb-1">
           <div className="flex items-center border-b border-white/50 py-2 px-3 rounded-md bg-white/20 backdrop-blur-md">
             <FiLock className="mr-2 text-lg shrink-0" />
-            <input type="password" placeholder="Password" className="w-full outline-none bg-transparent text-black placeholder-gray-500 text-sm" onChange={(e) => setPassword(e.target.value)} />
+            <input type={showPassword ? "text" : "password"} placeholder="Password" className="w-full outline-none bg-transparent text-black placeholder-gray-500 text-sm" onChange={(e) => setPassword(e.target.value)} />
+            <button type="button" onClick={() => setShowPassword(!showPassword)} className="ml-2 text-gray-500 hover:text-black transition shrink-0">
+              {showPassword ? <FiEyeOff /> : <FiEye />}
+            </button>
           </div>
           {strength && (
             <div className="mt-1.5 px-1">
@@ -155,7 +160,10 @@ export default function Signup() {
         {/* CONFIRM PASSWORD */}
         <div className="flex items-center border-b border-white/50 mb-4 mt-2 py-2 px-3 rounded-md bg-white/20 backdrop-blur-md">
           <FiLock className="mr-2 text-lg shrink-0" />
-          <input type="password" placeholder="Confirm Password" className="w-full outline-none bg-transparent text-black placeholder-gray-500 text-sm" onChange={(e) => setConfirmPassword(e.target.value)} />
+          <input type={showConfirm ? "text" : "password"} placeholder="Confirm Password" className="w-full outline-none bg-transparent text-black placeholder-gray-500 text-sm" onChange={(e) => setConfirmPassword(e.target.value)} />
+          <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="ml-2 text-gray-500 hover:text-black transition shrink-0">
+            {showConfirm ? <FiEyeOff /> : <FiEye />}
+          </button>
         </div>
 
         {error && <p className="text-red-500 text-xs mb-3 text-center">{error}</p>}
