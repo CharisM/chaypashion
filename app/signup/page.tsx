@@ -59,7 +59,14 @@ export default function Signup() {
     const { data, error: signupError } = await supabase.auth.signUp({ email, password });
     setLoading(false);
 
-    if (signupError) { setError(signupError.message); return; }
+    if (signupError) {
+      if (signupError.message.toLowerCase().includes("already registered") || signupError.message.toLowerCase().includes("already exists")) {
+        setError("This email is already registered. Please login instead.");
+      } else {
+        setError(signupError.message);
+      }
+      return;
+    }
 
     if (data.user) {
       await supabase.from("profiles").upsert({
@@ -216,7 +223,14 @@ export default function Signup() {
           </button>
         </div>
 
-        {error && <p className="text-red-500 text-xs mb-3 text-center">{error}</p>}
+        {error && (
+          <div className="mb-3 text-center">
+            <p className="text-red-500 text-xs">{error}</p>
+            {error.includes("already registered") && (
+              <Link href="/login" className="text-blue-400 text-xs hover:underline mt-1 inline-block">Go to Login →</Link>
+            )}
+          </div>
+        )}
 
         <button
           onClick={handleSignup}
