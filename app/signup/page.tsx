@@ -32,6 +32,10 @@ export default function Signup() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [confirmed, setConfirmed] = useState(false);
+  const [showOtp, setShowOtp] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [otpError, setOtpError] = useState("");
+  const [otpLoading, setOtpLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
@@ -66,8 +70,54 @@ export default function Signup() {
       });
     }
 
+    setConfirmed(false);
+    setShowOtp(true);
+  };
+
+  const handleVerifyOtp = async () => {
+    setOtpError("");
+    if (otp.length !== 6) { setOtpError("Please enter the 6-digit code."); return; }
+    setOtpLoading(true);
+    const { error: verifyError } = await supabase.auth.verifyOtp({
+      email,
+      token: otp,
+      type: "signup",
+    });
+    setOtpLoading(false);
+    if (verifyError) { setOtpError("Invalid or expired code. Please try again."); return; }
     setConfirmed(true);
   };
+
+  if (showOtp && !confirmed) return (
+    <div className="flex items-center justify-center h-screen bg-cover bg-center relative" style={{ backgroundImage: "url('/BG.jpg')" }}>
+      <div className="absolute inset-0 bg-black/30" />
+      <div className="relative bg-white/30 backdrop-blur-xl border border-white/30 p-8 w-[340px] shadow-2xl rounded-3xl z-10 text-center">
+        <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-4">
+          <FiMail className="text-blue-500 text-3xl" />
+        </div>
+        <h2 className="text-2xl font-bold text-gray-800 mb-2">Enter OTP Code</h2>
+        <p className="text-sm text-gray-700 mb-1">We sent a 6-digit code to:</p>
+        <p className="text-sm font-bold text-black bg-white/50 rounded-xl px-4 py-2 mb-5">{email}</p>
+        <input
+          type="text"
+          maxLength={6}
+          value={otp}
+          onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+          placeholder="000000"
+          className="w-full text-center text-2xl font-bold tracking-[0.5em] border-2 border-white/50 bg-white/20 backdrop-blur-md rounded-xl py-3 px-4 outline-none focus:border-black transition mb-3 text-black placeholder-gray-400"
+        />
+        {otpError && <p className="text-red-500 text-xs mb-3">{otpError}</p>}
+        <button
+          onClick={handleVerifyOtp}
+          disabled={otpLoading}
+          className="w-full bg-black text-white py-3 rounded-xl hover:bg-gray-900 transition font-semibold text-sm disabled:opacity-50 mb-3"
+        >
+          {otpLoading ? "Verifying..." : "Verify Code"}
+        </button>
+        <p className="text-xs text-gray-500">Didn't receive it? Check your spam folder.</p>
+      </div>
+    </div>
+  );
 
   if (confirmed) return (
     <div

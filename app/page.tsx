@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { FiFacebook, FiShoppingCart, FiMapPin, FiPhone, FiMail } from "react-icons/fi";
+import { FiSearch, FiFacebook, FiShoppingCart, FiMapPin, FiPhone, FiMail } from "react-icons/fi";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { products } from "@/lib/products";
@@ -17,14 +17,14 @@ export default function Home() {
   const router = useRouter();
   const [loaded, setLoaded] = useState(false);
   const [filter, setFilter] = useState("All");
+  const [search, setSearch] = useState("");
   const [addedId, setAddedId] = useState<number | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
   const [stockMap, setStockMap] = useState<StockMap>({});
 
-  const filteredProducts = filter === "All"
-    ? products
-    : products.filter(p => p.category === filter);
+  const filteredProducts = (filter === "All" ? products : products.filter(p => p.category === filter))
+    .filter(p => p.name.toLowerCase().includes(search.toLowerCase()) || p.category.toLowerCase().includes(search.toLowerCase()));
 
   const handleAddToCart = async (e: React.MouseEvent, item: typeof products[0]) => {
     e.preventDefault();
@@ -104,6 +104,23 @@ export default function Home() {
 
         {/* SECTION HEADER */}
         <div className="max-w-6xl mx-auto">
+          {/* SEARCH BAR */}
+          <div className="mb-8">
+            <div className="flex items-center border border-gray-300 rounded-full px-5 py-3 gap-3 max-w-xl mx-auto hover:border-gray-500 transition bg-white shadow-sm">
+              <FiSearch className="text-gray-400 text-lg shrink-0" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search products..."
+                className="outline-none bg-transparent flex-1 text-sm placeholder-gray-400"
+              />
+              {search && (
+                <button onClick={() => setSearch("")} className="text-gray-400 hover:text-black transition text-xs">✕</button>
+              )}
+            </div>
+          </div>
+
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
             <div>
               <span className="text-xs tracking-[0.4em] text-[#c9a98a] uppercase font-medium">Collection</span>

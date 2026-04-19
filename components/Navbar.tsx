@@ -74,12 +74,6 @@ export default function Navbar() {
 
         {/* DESKTOP NAV */}
         <ul className="hidden md:flex gap-8 text-sm font-medium items-center">
-          <li>
-            <form onSubmit={handleSearch} className="flex items-center border border-gray-300 rounded-full px-3 py-1.5 gap-2 hover:border-gray-500 transition">
-              <FiSearch className="text-gray-400 text-sm shrink-0" />
-              <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search products..." className="text-xs outline-none bg-transparent w-36 placeholder-gray-400" />
-            </form>
-          </li>
           <li><Link href="/" className="hover:text-gray-500 transition">HOME</Link></li>
           <li><Link href="/about" className="hover:text-gray-500 transition">ABOUT</Link></li>
           <li>
