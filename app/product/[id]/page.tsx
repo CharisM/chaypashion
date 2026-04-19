@@ -9,6 +9,7 @@ import { FiUser, FiSearch, FiShoppingCart, FiArrowLeft, FiFacebook } from "react
 import { supabase } from "@/lib/supabase";
 import { products } from "@/lib/products";
 import { addToCart, getCart } from "@/lib/cart";
+import { getStock, deductStock } from "@/lib/stock";
 import { motion } from "framer-motion";
 
 export default function ProductDetail() {
@@ -24,9 +25,15 @@ export default function ProductDetail() {
   const [cartCount, setCartCount] = useState(0);
   const [userId, setUserId] = useState<string | null>(null);
   const [selectedVariant, setSelectedVariant] = useState(0);
+  const [stock, setStock] = useState<number | null>(null);
+  const [zoomed, setZoomed] = useState(false);
   const dropdownRef = useRef<HTMLLIElement>(null);
 
   const currentImg = product?.variants ? product.variants[selectedVariant].img : product?.img;
+
+  useEffect(() => {
+    if (product) getStock(product.id).then(setStock);
+  }, [product]);
 
   useEffect(() => { setCartCount(getCart(userId ?? undefined).length); }, [loaded, userId]);
 
@@ -71,8 +78,9 @@ export default function ProductDetail() {
     router.push("/");
   };
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (product!.category !== "Dress" && !selectedSize) { setCartMsg("Please select a size first."); return; }
+    if (stock !== null && stock <= 0) { setCartMsg("Sorry, this item is out of stock."); return; }
     const selectedColor = product!.variants ? product!.variants[selectedVariant].color : undefined;
     const cartImg = product!.variants ? product!.variants[selectedVariant].img : product!.img;
     addToCart({
@@ -83,6 +91,8 @@ export default function ProductDetail() {
       size: product!.category === "Dress" ? "Free Size" : (selectedSize ?? product!.sizes[0]),
       category: product!.category
     }, userId ?? undefined);
+    await deductStock(product!.id, 1);
+    setStock(prev => prev !== null ? Math.max(0, prev - 1) : null);
     setCartMsg(`✓ Added to cart!`);
     setCartCount(getCart(userId ?? undefined).length);
     setTimeout(() => setCartMsg(""), 3000);
@@ -145,28 +155,57 @@ export default function ProductDetail() {
           <FiArrowLeft /> Back
         </button>
 
-        <div className="grid grid-cols-2 gap-14">
+        <div className="grid grid-cols-2 gap-14 items-start">
 
           {/* IMAGE */}
           <motion.div
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
-            className="bg-gray-50 overflow-hidden"
+            className="bg-gray-50 overflow-hidden sticky top-8 cursor-zoom-in"
+            onClick={() => setZoomed(true)}
           >
-            <img src={currentImg} alt={product.name} className="w-full h-[500px] object-cover" />
+            <img src={currentImg} alt={product.name} className="w-full h-[500px] object-cover hover:scale-105 transition duration-500" />
+            <p className="text-center text-[10px] text-gray-400 py-2 tracking-widest uppercase">Click to zoom</p>
           </motion.div>
+
+          {/* LIGHTBOX */}
+          {zoomed && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/90 z-[9999] flex items-center justify-center cursor-zoom-out"
+              onClick={() => setZoomed(false)}
+            >
+              <motion.img
+                initial={{ scale: 0.8 }}
+                animate={{ scale: 1 }}
+                src={currentImg}
+                alt={product.name}
+                className="max-h-[90vh] max-w-[90vw] object-contain rounded-xl shadow-2xl"
+              />
+              <button className="absolute top-6 right-6 text-white text-3xl hover:text-gray-300 transition">✕</button>
+            </motion.div>
+          )}
 
           {/* DETAILS */}
           <motion.div
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
-            className="flex flex-col justify-center"
+            className="flex flex-col"
           >
             <span className="text-xs tracking-[0.3em] text-gray-400 uppercase mb-2">{product.category}</span>
             <h1 className="text-3xl font-bold mb-3">{product.name}</h1>
-            <p className="text-2xl font-semibold mb-5">₱{product.price.toLocaleString()}</p>
+            <p className="text-2xl font-semibold mb-3">₱{product.price.toLocaleString()}</p>
+            {stock !== null && (
+              <div className={`inline-flex items-center gap-2 text-xs font-semibold px-3 py-1 rounded-full mb-5 ${
+                stock === 0 ? "bg-red-100 text-red-500" : stock <= 3 ? "bg-orange-100 text-orange-500" : "bg-green-100 text-green-600"
+              }`}>
+                {stock === 0 ? "Out of Stock" : stock <= 3 ? `⚠ Only ${stock} left!` : `✓ In Stock (${stock})`}
+              </div>
+            )}
             <p className="text-gray-500 text-sm leading-relaxed mb-8">{product.description}</p>
 
             {/* COLOR VARIANTS */}
@@ -201,8 +240,8 @@ export default function ProductDetail() {
                 <p className="text-sm font-semibold uppercase tracking-widest mb-4">Measurements</p>
                 <div className="grid grid-cols-3 gap-3">
                   {[
-                    { label: "Bust", value: product.measurements?.bust },
-                    { label: "Waist", value: product.measurements?.waist },
+                    { label: "Bust",   value: product.measurements?.bust },
+                    { label: "Waist",  value: product.measurements?.waist },
                     { label: "Length", value: product.measurements?.length },
                   ].map((m) => (
                     <div key={m.label} className="border border-gray-100 rounded-xl p-4 text-center bg-gray-50">
@@ -211,7 +250,7 @@ export default function ProductDetail() {
                     </div>
                   ))}
                 </div>
-                <p className="text-xs text-gray-400 mt-3">* This is a unique piece — one item only.</p>
+                <p className="text-xs text-gray-400 mt-3">* Free Size — fits most body types.</p>
               </div>
             ) : (
               <div className="mb-8">
@@ -238,10 +277,15 @@ export default function ProductDetail() {
             {/* ADD TO CART */}
             <button
               onClick={handleAddToCart}
-              className="ripple-btn flex items-center justify-center gap-3 bg-black text-white py-4 text-sm font-semibold tracking-widest uppercase hover:bg-gray-800 transition"
+              disabled={stock === 0}
+              className={`ripple-btn flex items-center justify-center gap-3 py-4 text-sm font-semibold tracking-widest uppercase transition ${
+                stock === 0
+                  ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  : "bg-black text-white hover:bg-gray-800"
+              }`}
             >
               <FiShoppingCart className="text-lg" />
-              Add to Cart
+              {stock === 0 ? "Out of Stock" : "Add to Cart"}
             </button>
 
             {cartMsg && (

@@ -20,6 +20,7 @@ export default function WishlistPage() {
   const [cartCount, setCartCount] = useState(0);
   const [wishlist, setWishlist] = useState<Product[]>([]);
   const [addedId, setAddedId] = useState<number | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLLIElement>(null);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -34,14 +35,15 @@ export default function WishlistPage() {
     router.push("/login");
   };
 
-  const handleRemove = (id: number) => {
-    removeFromWishlist(id);
-    setWishlist(getWishlist());
+  const handleRemove = async (id: number) => {
+    if (!userId) return;
+    await removeFromWishlist(userId, id);
+    setWishlist(prev => prev.filter(p => p.id !== id));
   };
 
   const handleAddToCart = (item: Product) => {
-    addToCart({ id: item.id, name: item.name, img: item.img, price: item.price, size: item.sizes[0], category: item.category });
-    setCartCount(getCart().length);
+    addToCart({ id: item.id, name: item.name, img: item.img, price: item.price, size: item.sizes[0], category: item.category }, userId ?? undefined);
+    setCartCount(getCart(userId ?? undefined).length);
     setAddedId(item.id);
     setTimeout(() => setAddedId(null), 2000);
   };
@@ -51,6 +53,10 @@ export default function WishlistPage() {
       if (user) {
         const { data } = await supabase.from("profiles").select("username").eq("id", user.id).single();
         setUsername(data?.username ?? user.email ?? null);
+        setUserId(user.id);
+        const wl = await getWishlist(user.id);
+        setWishlist(wl);
+        setCartCount(getCart(user.id).length);
       } else { setUsername(null); }
       setLoaded(true);
     };
@@ -66,9 +72,8 @@ export default function WishlistPage() {
   }, []);
 
   useEffect(() => {
-    setCartCount(getCart().length);
-    setWishlist(getWishlist());
-  }, [loaded]);
+    setCartCount(getCart(userId ?? undefined).length);
+  }, [loaded, userId]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -127,6 +132,12 @@ export default function WishlistPage() {
       </nav>
 
       <div className="max-w-5xl mx-auto px-6 py-14">
+        {!loaded ? (
+          <div className="flex items-center justify-center py-32">
+            <div className="w-8 h-8 border-2 border-black border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : (
+        <>
         <div className="flex items-center gap-3 mb-10">
           <FiHeart className="text-2xl text-[#c9a98a]" />
           <div>
@@ -186,6 +197,8 @@ export default function WishlistPage() {
               ))}
             </AnimatePresence>
           </div>
+        )}
+        </>
         )}
       </div>
 

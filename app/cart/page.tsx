@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { FiShoppingBag, FiEdit2, FiCheck, FiX, FiSearch, FiUser, FiShoppingCart, FiArrowRight, FiTag } from "react-icons/fi";
+import { FiShoppingBag, FiEdit2, FiCheck, FiX, FiSearch, FiUser, FiShoppingCart, FiArrowRight, FiTag, FiSmartphone, FiPackage } from "react-icons/fi";
 import Link from "next/link";
 import { getCart, removeFromCart, updateCartItem, CartItem } from "@/lib/cart";
 import { products } from "@/lib/products";
@@ -22,6 +22,7 @@ export default function CartPage() {
   const [username, setUsername] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [cartLoaded, setCartLoaded] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<"gcash" | "cod">("cod");
   const dropdownRef = useRef<HTMLLIElement>(null);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -295,14 +296,52 @@ export default function CartPage() {
               </div>
             </div>
 
-            <div className="border-t border-gray-200 pt-4 mb-8">
+            <div className="border-t border-gray-200 pt-4 mb-6">
               <div className="flex justify-between items-center">
                 <span className="font-bold text-gray-800">Total</span>
                 <span className="text-2xl font-bold text-gray-800">₱{total.toLocaleString()}</span>
               </div>
             </div>
 
-            <div className="flex gap-2 mb-8">
+            {/* PAYMENT METHOD */}
+            <div className="mb-6">
+              <p className="text-xs tracking-widest uppercase text-gray-400 font-medium mb-3">Payment Method</p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setPaymentMethod("gcash")}
+                  className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border text-sm font-semibold transition ${
+                    paymentMethod === "gcash"
+                      ? "bg-blue-500 text-white border-blue-500"
+                      : "bg-white text-gray-600 border-gray-200 hover:border-blue-400"
+                  }`}
+                >
+                  <FiSmartphone className="text-base" /> GCash
+                </button>
+                <button
+                  onClick={() => setPaymentMethod("cod")}
+                  className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border text-sm font-semibold transition ${
+                    paymentMethod === "cod"
+                      ? "bg-black text-white border-black"
+                      : "bg-white text-gray-600 border-gray-200 hover:border-black"
+                  }`}
+                >
+                  <FiPackage className="text-base" /> COD
+                </button>
+              </div>
+              {paymentMethod === "gcash" && (
+                <div className="mt-3 bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs text-blue-600">
+                  📱 GCash Number: <span className="font-bold">09XX-XXX-XXXX</span><br />
+                  Send payment after order confirmation.
+                </div>
+              )}
+              {paymentMethod === "cod" && (
+                <div className="mt-3 bg-gray-50 border border-gray-100 rounded-xl p-3 text-xs text-gray-500">
+                  📦 Pay when your order arrives at your doorstep.
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-2 mb-6">
               <div className="flex-1 flex items-center gap-2 border border-gray-200 rounded-xl px-3 py-2 bg-white">
                 <FiTag className="text-gray-400 text-sm shrink-0" />
                 <input type="text" placeholder="Promo code" className="text-xs outline-none bg-transparent flex-1 placeholder-gray-400" />
@@ -315,6 +354,7 @@ export default function CartPage() {
                 onClick={() => {
                   const key = userId ? `chay_cart_${userId}` : "chay_cart_guest";
                   localStorage.setItem(key, JSON.stringify(selectedItems));
+                  localStorage.setItem("chay_payment_method", paymentMethod);
                   router.push("/order-confirmation");
                 }}
                 className="w-full bg-black text-white py-4 text-sm font-bold tracking-widest uppercase hover:bg-gray-800 transition flex items-center justify-center gap-3 rounded-xl"

@@ -1,12 +1,16 @@
 import { CartItem } from "@/lib/cart";
+import { supabase } from "@/lib/supabase";
 
-// Add your admin email here
 export const ADMIN_EMAIL = "chayfashion.admin@gmail.com";
 
-export const isAdmin = (email: string | null) => email === ADMIN_EMAIL;
+export const isAdmin = async (): Promise<boolean> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  return user?.email === ADMIN_EMAIL;
+};
 
 export type Order = {
   orderNumber: string;
+  userId?: string;
   items: CartItem[];
   subtotal: number;
   shipping: number;
@@ -14,30 +18,67 @@ export type Order = {
   date: string;
   expectedDelivery: string;
   delivered: boolean;
+  paymentMethod?: string;
 };
 
-const KEY = "chay_orders";
-
-export const getOrders = (): Order[] => {
-  if (typeof window === "undefined") return [];
-  try {
-    const all = JSON.parse(localStorage.getItem(KEY) ?? "[]");
-    return all.filter((o: Order) => o.items && o.items.length > 0 && o.total > 0);
-  } catch { return []; }
+export const getOrders = async (userId: string): Promise<Order[]> => {
+  const { data, error } = await supabase
+    .from("orders")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+  if (error || !data) return [];
+  return data.map((o) => ({
+    orderNumber: o.order_number,
+    userId: o.user_id,
+    items: o.items,
+    subtotal: o.subtotal,
+    shipping: o.shipping,
+    total: o.total,
+    date: o.date,
+    expectedDelivery: o.expected_delivery,
+    delivered: o.delivered,
+    paymentMethod: o.payment_method,
+  }));
 };
 
-export const saveOrder = (order: Order) => {
-  if (!order.items || order.items.length === 0) return;
-  const orders = getOrders();
-  localStorage.setItem(KEY, JSON.stringify([order, ...orders]));
+export const getAllOrders = async (): Promise<Order[]> => {
+  const { data, error } = await supabase
+    .from("orders")
+    .select("*")
+    .order("created_at", { ascending: false });
+  if (error || !data) return [];
+  return data.map((o) => ({
+    orderNumber: o.order_number,
+    userId: o.user_id,
+    items: o.items,
+    subtotal: o.subtotal,
+    shipping: o.shipping,
+    total: o.total,
+    date: o.date,
+    expectedDelivery: o.expected_delivery,
+    delivered: o.delivered,
+    paymentMethod: o.payment_method,
+  }));
 };
 
-export const markAsDelivered = (orderNumber: string) => {
-  const all = JSON.parse(localStorage.getItem(KEY) ?? "[]");
-  const updated = all.map((o: Order) =>
-    o.orderNumber === orderNumber ? { ...o, delivered: true } : o
-  );
-  localStorage.setItem(KEY, JSON.stringify(updated));
+export const saveOrder = async (order: Order, userId: string) => {
+  await supabase.from("orders").insert({
+    user_id: userId,
+    order_number: order.orderNumber,
+    items: order.items,
+    subtotal: order.subtotal,
+    shipping: order.shipping,
+    total: order.total,
+    date: order.date,
+    expected_delivery: order.expectedDelivery,
+    delivered: false,
+    payment_method: order.paymentMethod ?? "cod",
+  });
+};
+
+export const markAsDelivered = async (orderNumber: string) => {
+  await supabase.from("orders").update({ delivered: true }).eq("order_number", orderNumber);
 };
 
 export const clearCart = (userId?: string) => {

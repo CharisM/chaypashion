@@ -13,13 +13,17 @@ import { motion } from "framer-motion";
 export default function OrderConfirmationPage() {
   const [items, setItems] = useState<CartItem[]>([]);
   const [orderNumber, setOrderNumber] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("cod");
 
   useEffect(() => {
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      const userId = user?.id;
+      if (!user) return;
+      const userId = user.id;
       const cartItems = getCart(userId);
       if (cartItems.length === 0) return;
+      const payment = localStorage.getItem("chay_payment_method") ?? "cod";
+      setPaymentMethod(payment);
       const num = "CF-" + Math.random().toString(36).substring(2, 8).toUpperCase();
       const subtotalAmt = cartItems.reduce((sum, item) => sum + item.price, 0);
       const order = {
@@ -31,9 +35,11 @@ export default function OrderConfirmationPage() {
         date: new Date().toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" }),
         expectedDelivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" }),
         delivered: false,
+        paymentMethod: payment,
       };
-      saveOrder(order);
+      await saveOrder(order, userId);
       clearCart(userId);
+      localStorage.removeItem("chay_payment_method");
       setItems(cartItems);
       setOrderNumber(num);
     };
@@ -64,6 +70,11 @@ export default function OrderConfirmationPage() {
           <p className="text-gray-500 text-sm mt-2">Thank you for shopping at Chay Fashion.</p>
           <div className="mt-3 inline-block bg-black text-white text-xs px-4 py-2 rounded-full tracking-widest uppercase">
             Order #{orderNumber}
+          </div>
+          <div className={`mt-3 inline-flex items-center gap-2 text-xs px-4 py-2 rounded-full font-semibold ${
+            paymentMethod === "gcash" ? "bg-blue-100 text-blue-600" : "bg-gray-100 text-gray-600"
+          }`}>
+            {paymentMethod === "gcash" ? "📱 GCash Payment" : "📦 Cash on Delivery"}
           </div>
         </motion.div>
 

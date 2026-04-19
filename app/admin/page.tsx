@@ -7,7 +7,9 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FiPackage, FiCheckCircle, FiChevronDown, FiChevronUp, FiClock, FiCalendar, FiShield } from "react-icons/fi";
 import { supabase } from "@/lib/supabase";
-import { getOrders, markAsDelivered, Order, ADMIN_EMAIL } from "@/lib/orders";
+import { getAllOrders, markAsDelivered, Order, ADMIN_EMAIL, isAdmin } from "@/lib/orders";
+import { getStockMap, setStock, StockMap } from "@/lib/stock";
+import { products } from "@/lib/products";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function AdminPage() {
@@ -15,28 +17,38 @@ export default function AdminPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [openOrder, setOpenOrder] = useState<string | null>(null);
   const [authorized, setAuthorized] = useState(false);
+  const [stockMap, setStockMap] = useState<StockMap>({});
+  const [editingStock, setEditingStock] = useState<Record<number, number>>({});
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const check = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user || user.email !== ADMIN_EMAIL) {
-        router.push("/");
-        return;
-      }
+      const admin = await isAdmin();
+      if (!admin) { router.push("/"); return; }
       setAuthorized(true);
-      setOrders(getOrders());
+      const data = await getAllOrders();
+      setOrders(data);
+      const sm = await getStockMap();
+      setStockMap(sm);
+      setEditingStock(sm);
+      setLoading(false);
     };
     check();
   }, []);
 
-  const handleMarkDelivered = (orderNumber: string) => {
-    markAsDelivered(orderNumber);
-    setOrders(getOrders());
+  const handleMarkDelivered = async (orderNumber: string) => {
+    await markAsDelivered(orderNumber);
+    setOrders(prev => prev.map(o => o.orderNumber === orderNumber ? { ...o, delivered: true } : o));
+  };
+
+  const handleSaveStock = async (productId: number) => {
+    await setStock(productId, editingStock[productId] ?? 0);
+    setStockMap(prev => ({ ...prev, [productId]: editingStock[productId] ?? 0 }));
   };
 
   if (!authorized) return (
     <div className="min-h-screen flex items-center justify-center bg-white">
-      <p className="text-gray-400 text-sm">Checking authorization...</p>
+      <div className="w-8 h-8 border-2 border-black border-t-transparent rounded-full animate-spin" />
     </div>
   );
 
@@ -80,6 +92,53 @@ export default function AdminPage() {
       </div>
 
       <div className="max-w-5xl mx-auto px-6 py-12 space-y-5">
+
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="w-8 h-8 border-2 border-black border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : (
+        <>
+        {/* STOCK MANAGEMENT */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-8">
+          <div className="px-6 py-4 bg-gray-50 border-b">
+            <p className="text-xs tracking-[0.3em] uppercase font-bold text-gray-700">Stock Management</p>
+          </div>
+          <div className="divide-y">
+            {products.map((p) => (
+              <div key={p.id} className="flex items-center justify-between px-6 py-3">
+                <div className="flex items-center gap-3">
+                  <img src={p.img} alt={p.name} className="w-10 h-10 object-cover rounded-lg" />
+                  <p className="text-sm font-medium">{p.name}</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className={`text-xs px-2 py-1 rounded-full font-semibold ${
+                    (stockMap[p.id] ?? 0) === 0 ? "bg-red-100 text-red-500" :
+                    (stockMap[p.id] ?? 0) <= 3 ? "bg-orange-100 text-orange-500" :
+                    "bg-green-100 text-green-600"
+                  }`}>
+                    {(stockMap[p.id] ?? 0) === 0 ? "Out of Stock" : `${stockMap[p.id]} left`}
+                  </span>
+                  <input
+                    type="number"
+                    min={0}
+                    value={editingStock[p.id] ?? 0}
+                    onChange={(e) => setEditingStock(prev => ({ ...prev, [p.id]: Number(e.target.value) }))}
+                    className="w-16 border border-gray-200 rounded-lg px-2 py-1 text-sm text-center outline-none focus:border-black"
+                  />
+                  <button
+                    onClick={() => handleSaveStock(p.id)}
+                    className="bg-black text-white text-xs px-3 py-1.5 rounded-lg hover:bg-gray-800 transition font-semibold"
+                  >
+                    Save
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ORDERS */}
         {orders.length === 0 ? (
           <div className="bg-white rounded-2xl p-16 text-center">
             <FiPackage className="text-5xl text-gray-200 mx-auto mb-4" />
@@ -231,6 +290,8 @@ export default function AdminPage() {
             </AnimatePresence>
           </motion.div>
         ))}
+      </>
+      )}
       </div>
     </div>
   );

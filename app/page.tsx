@@ -3,41 +3,37 @@
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
-import { useEffect, useState, useRef } from "react";
-import { FiSearch, FiUser, FiFacebook, FiShoppingCart, FiMapPin, FiPhone, FiMail } from "react-icons/fi";
+import { useEffect, useState } from "react";
+import { FiFacebook, FiShoppingCart, FiMapPin, FiPhone, FiMail } from "react-icons/fi";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { products } from "@/lib/products";
 import { motion, AnimatePresence } from "framer-motion";
 import { getCart, addToCart } from "@/lib/cart";
+import { getStockMap, StockMap, deductStock } from "@/lib/stock";
+import Navbar from "@/components/Navbar";
 
 export default function Home() {
   const router = useRouter();
-  const [username, setUsername] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
-  const [dropdown, setDropdown] = useState(false);
-  const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
-  const [cartCount, setCartCount] = useState(0);
   const [addedId, setAddedId] = useState<number | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
-  const dropdownRef = useRef<HTMLLIElement>(null);
+  const [username, setUsername] = useState<string | null>(null);
+  const [stockMap, setStockMap] = useState<StockMap>({});
 
   const filteredProducts = filter === "All"
     ? products
     : products.filter(p => p.category === filter);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (search.trim()) router.push(`/search?q=${encodeURIComponent(search.trim())}`);
-  };
-
-  const handleAddToCart = (e: React.MouseEvent, item: typeof products[0]) => {
+  const handleAddToCart = async (e: React.MouseEvent, item: typeof products[0]) => {
     e.preventDefault();
     e.stopPropagation();
     if (!loaded || !username) { router.push("/login"); return; }
+    if ((stockMap[item.id] ?? 0) <= 0) return;
     addToCart({ id: item.id, name: item.name, img: item.img, price: item.price, size: item.sizes[0], category: item.category }, userId ?? undefined);
-    setCartCount(getCart(userId ?? undefined).length);
+    await deductStock(item.id, 1);
+    setStockMap(prev => ({ ...prev, [item.id]: Math.max(0, (prev[item.id] ?? 0) - 1) }));
     setAddedId(item.id);
     setTimeout(() => setAddedId(null), 2000);
   };
@@ -48,111 +44,23 @@ export default function Home() {
         const { data } = await supabase.from("profiles").select("username").eq("id", user.id).single();
         setUsername(data?.username ?? user.email ?? null);
         setUserId(user.id);
-      } else {
-        setUsername(null);
-      }
+      } else { setUsername(null); }
       setLoaded(true);
     };
-
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      if (error) {
-        supabase.auth.signOut();
-        setLoaded(true);
-        return;
-      }
-      getUser(session?.user ?? null);
-    });
-
+    supabase.auth.getSession().then(({ data: { session } }) => getUser(session?.user ?? null));
+    getStockMap().then(setStockMap);
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "TOKEN_REFRESHED" || event === "SIGNED_IN") {
-        getUser(session?.user ?? null);
-      } else if (event === "SIGNED_OUT") {
-        setUsername(null);
-        setLoaded(true);
-      }
+      if (event === "TOKEN_REFRESHED" || event === "SIGNED_IN") getUser(session?.user ?? null);
+      else if (event === "SIGNED_OUT") { setUsername(null); setUserId(null); setLoaded(true); }
     });
-
     return () => subscription.unsubscribe();
   }, []);
-
-  useEffect(() => {
-    setCartCount(getCart(userId ?? undefined).length);
-  }, [loaded, userId]);
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node))
-        setDropdown(false);
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    setUsername(null);
-    setDropdown(false);
-    router.push("/");
-  };
 
   return (
     <div className="w-full">
 
       {/* NAVBAR */}
-      <nav className="flex justify-between items-center px-12 py-4 bg-white">
-        <Link href="/"><h1 className="text-3xl font-serif italic">Chay Fashion</h1></Link>
-
-        <ul className="flex gap-8 text-sm font-medium items-center">
-          <li>
-            <form onSubmit={handleSearch} className="flex items-center border border-gray-300 rounded-full px-3 py-1.5 gap-2 hover:border-gray-500 transition">
-              <FiSearch className="text-gray-400 text-sm shrink-0" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search products..."
-                className="text-xs outline-none bg-transparent w-36 placeholder-gray-400"
-              />
-            </form>
-          </li>
-          <li className="text-blue-600"><Link href="/">HOME</Link></li>
-          <li><Link href="/about">ABOUT</Link></li>
-          <li>
-            <Link href="/cart" className="relative flex items-center hover:opacity-70 transition">
-              <FiShoppingCart className="text-xl" />
-              {cartCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
-                  {cartCount > 9 ? "9+" : cartCount}
-                </span>
-              )}
-            </Link>
-          </li>
-          <li className="relative" ref={dropdownRef}>
-            <button
-              onClick={() => setDropdown(!dropdown)}
-              className="flex items-center gap-2 hover:opacity-80 transition"
-            >
-              <div className="w-9 h-9 rounded-full bg-black flex items-center justify-center">
-                <FiUser className="text-white text-lg" />
-              </div>
-              {loaded && username && <span className="text-sm font-medium">{username}</span>}
-            </button>
-            {dropdown && (
-              <div className="absolute right-0 mt-2 w-44 bg-white border rounded-xl shadow-lg z-[999] overflow-hidden">
-                {username ? (
-                  <>
-                    <Link href="/profile" onClick={() => setDropdown(false)} className="block px-4 py-2 text-sm hover:bg-gray-100">Profile</Link>
-                    <Link href="/orders" onClick={() => setDropdown(false)} className="block px-4 py-2 text-sm hover:bg-gray-100">My Orders</Link>
-                    <button onClick={handleLogout} className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-100">Logout</button>
-                  </>
-                ) : (
-                  <Link href="/login" onClick={() => setDropdown(false)} className="block px-4 py-2 text-sm hover:bg-gray-100">Login</Link>
-                )}
-              </div>
-            )}
-          </li>
-        </ul>
-      </nav>
+      <Navbar />
 
       {/* HERO */}
     <div className="h-[70vh] relative overflow-hidden">
@@ -241,12 +149,17 @@ export default function Home() {
                 >
                   <Link href={loaded && !username ? "/login" : `/product/${item.id}`}>
                     <div className="group relative overflow-hidden bg-white cursor-pointer shadow-sm hover:shadow-lg transition duration-300">
-                      <div className="overflow-hidden">
+                      <div className="overflow-hidden relative">
                         <img
                           src={item.img}
                           alt={item.name}
                           className="w-full h-[280px] object-cover transition-transform duration-700 group-hover:scale-110"
                         />
+                        {(stockMap[item.id] ?? 1) === 0 && (
+                          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                            <span className="bg-white text-black text-xs font-bold px-3 py-1 rounded-full tracking-widest uppercase">Out of Stock</span>
+                          </div>
+                        )}
                       </div>
                       {/* OVERLAY */}
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition duration-300" />
@@ -257,8 +170,11 @@ export default function Home() {
                           <p className="text-sm font-bold text-[#c9a98a]">₱{item.price.toLocaleString()}</p>
                           <button
                             onClick={(e) => handleAddToCart(e, item)}
+                            disabled={(stockMap[item.id] ?? 1) === 0}
                             className={`w-8 h-8 rounded-full flex items-center justify-center transition ${
-                              addedId === item.id
+                              (stockMap[item.id] ?? 1) === 0
+                                ? "bg-gray-300 text-gray-400 cursor-not-allowed"
+                                : addedId === item.id
                                 ? "bg-green-500 text-white"
                                 : "bg-black text-white hover:bg-gray-700"
                             }`}

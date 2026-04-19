@@ -13,6 +13,7 @@ import { getCart } from "@/lib/cart";
 export default function Profile() {
   const router = useRouter();
   const [profile, setProfile] = useState<{ username: string; phone: string; email: string } | null>(null);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [dropdown, setDropdown] = useState(false);
   const [username, setUsername] = useState<string | null>(null);
@@ -35,6 +36,7 @@ export default function Profile() {
       if (!user) { setTimeout(() => router.push("/login"), 0); return; }
       const { data } = await supabase.from("profiles").select("username, phone, email").eq("id", user.id).single();
       setProfile(data);
+      setLoading(false);
     };
     getProfile();
   }, []);
@@ -115,6 +117,11 @@ export default function Profile() {
       </div>
 
       {/* CONTENT */}
+      {loading ? (
+        <div className="flex items-center justify-center py-32">
+          <div className="w-8 h-8 border-2 border-black border-t-transparent rounded-full animate-spin" />
+        </div>
+      ) : (
       <div className="max-w-2xl mx-auto px-6 pt-20 pb-16">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="mb-8">
           <h1 className="text-2xl font-bold">{profile?.username ?? "User"}</h1>
@@ -162,6 +169,7 @@ export default function Profile() {
           </Link>
         </motion.div>
       </div>
+      )}
     </div>
   );
 }

@@ -14,19 +14,22 @@ export default function OrdersPage() {
   const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [openOrder, setOpenOrder] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const check = async () => {
+    const load = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setTimeout(() => router.push("/login"), 0); return; }
+      const data = await getOrders(user.id);
+      setOrders(data);
+      setLoading(false);
     };
-    check();
-    setOrders(getOrders());
+    load();
   }, []);
 
-  const handleMarkDelivered = (orderNumber: string) => {
-    markAsDelivered(orderNumber);
-    setOrders(getOrders());
+  const handleMarkDelivered = async (orderNumber: string) => {
+    await markAsDelivered(orderNumber);
+    setOrders(prev => prev.map(o => o.orderNumber === orderNumber ? { ...o, delivered: true } : o));
   };
 
   return (
@@ -54,8 +57,11 @@ export default function OrdersPage() {
       </div>
 
       <div className="max-w-4xl mx-auto px-6 py-12">
-
-        {orders.length === 0 ? (
+        {loading ? (
+          <div className="flex items-center justify-center py-32">
+            <div className="w-8 h-8 border-2 border-black border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : orders.length === 0 ? (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="flex flex-col items-center justify-center py-32 gap-6">
             <div className="relative">
               <div className="w-28 h-28 rounded-full bg-gray-50 border-2 border-dashed border-gray-200 flex items-center justify-center">
