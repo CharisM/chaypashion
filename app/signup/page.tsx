@@ -45,6 +45,11 @@ export default function Signup() {
     setError("");
     if (!username || !email || !password) { setError("Please fill in all fields."); return; }
 
+    // Email validation
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError("Please enter a valid email address."); return;
+    }
+
     // Phone validation — must be 11 digits starting with 09
     if (number && !/^09\d{9}$/.test(number)) {
       setError("Phone number must be 11 digits starting with 09 (e.g. 09123456789).");
@@ -166,9 +171,17 @@ export default function Signup() {
         </div>
 
         {/* EMAIL */}
-        <div className="flex items-center border-b border-white/50 mb-3 py-2 px-3 rounded-md bg-white/20 backdrop-blur-md">
-          <FiMail className="mr-2 text-lg shrink-0" />
-          <input type="email" placeholder="Email" className="w-full outline-none bg-transparent text-black placeholder-gray-500 text-sm" onChange={(e) => setEmail(e.target.value)} />
+        <div className="mb-3">
+          <div className="flex items-center border-b border-white/50 py-2 px-3 rounded-md bg-white/20 backdrop-blur-md">
+            <FiMail className="mr-2 text-lg shrink-0" />
+            <input type="email" placeholder="Email" className="w-full outline-none bg-transparent text-black placeholder-gray-500 text-sm" onChange={(e) => setEmail(e.target.value)} />
+          </div>
+          {email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && (
+            <p className="text-red-500 text-[10px] mt-1 px-1">Please enter a valid email address</p>
+          )}
+          {email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && (
+            <p className="text-green-600 text-[10px] mt-1 px-1">✓ Valid email</p>
+          )}
         </div>
 
         {/* PHONE */}
