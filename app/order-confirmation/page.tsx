@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { FiCheckCircle, FiFacebook, FiShoppingBag } from "react-icons/fi";
+import { FiCheckCircle, FiFacebook, FiShoppingBag, FiMapPin } from "react-icons/fi";
 import { getCart, CartItem } from "@/lib/cart";
 import { saveOrder, clearCart } from "@/lib/orders";
 import { supabase } from "@/lib/supabase";
@@ -14,6 +14,7 @@ export default function OrderConfirmationPage() {
   const [items, setItems] = useState<CartItem[]>([]);
   const [orderNumber, setOrderNumber] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("cod");
+  const [deliveryAddress, setDeliveryAddress] = useState<{ fullName: string; phone: string; address: string; city: string; zip: string } | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -24,8 +25,11 @@ export default function OrderConfirmationPage() {
       if (cartItems.length === 0) return;
       const payment = localStorage.getItem("chay_payment_method") ?? "cod";
       setPaymentMethod(payment);
+      const savedAddress = localStorage.getItem("chay_delivery_address");
+      const parsedAddress = savedAddress ? JSON.parse(savedAddress) : null;
+      setDeliveryAddress(parsedAddress);
       const num = "CF-" + Math.random().toString(36).substring(2, 8).toUpperCase();
-      const subtotalAmt = cartItems.reduce((sum, item) => sum + item.price, 0);
+      const subtotalAmt = cartItems.reduce((sum, item) => sum + item.price * (item.qty ?? 1), 0);
       const order = {
         orderNumber: num,
         items: cartItems,
@@ -36,17 +40,39 @@ export default function OrderConfirmationPage() {
         expectedDelivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" }),
         delivered: false,
         paymentMethod: payment,
+        deliveryAddress: parsedAddress,
       };
       await saveOrder(order, userId);
       clearCart(userId);
       localStorage.removeItem("chay_payment_method");
+      localStorage.removeItem("chay_delivery_address");
+
+      // send confirmation email
+      const { data: profile } = await supabase.from("profiles").select("email").eq("id", userId).single();
+      const userEmail = profile?.email ?? user.email;
+      if (userEmail) {
+        await fetch("/api/send-order-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: userEmail,
+            orderNumber: num,
+            items: cartItems,
+            subtotal: subtotalAmt,
+            shipping: 150,
+            total: subtotalAmt + 150,
+            paymentMethod: payment,
+            deliveryAddress: parsedAddress,
+          }),
+        });
+      }
       setItems(cartItems);
       setOrderNumber(num);
     };
     load();
   }, []);
 
-  const subtotal = items.reduce((sum, item) => sum + item.price, 0);
+  const subtotal = items.reduce((sum, item) => sum + item.price * (item.qty ?? 1), 0);
   const shipping = items.length > 0 ? 150 : 0;
   const total = subtotal + shipping;
 
@@ -77,6 +103,22 @@ export default function OrderConfirmationPage() {
             {paymentMethod === "gcash" ? "📱 GCash Payment" : "📦 Cash on Delivery"}
           </div>
         </motion.div>
+
+        {/* DELIVERY ADDRESS */}
+        {deliveryAddress && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.25 }} className="bg-white rounded-2xl shadow-sm overflow-hidden mb-6">
+            <div className="px-6 py-4 border-b flex items-center gap-2">
+              <FiMapPin className="text-[#c9a98a]" />
+              <p className="text-xs tracking-[0.2em] uppercase text-gray-400 font-medium">Delivery Address</p>
+            </div>
+            <div className="px-6 py-4 text-sm text-gray-700 space-y-1">
+              <p className="font-semibold">{deliveryAddress.fullName}</p>
+              <p>{deliveryAddress.phone}</p>
+              <p>{deliveryAddress.address}</p>
+              <p>{deliveryAddress.city}{deliveryAddress.zip ? `, ${deliveryAddress.zip}` : ""}</p>
+            </div>
+          </motion.div>
+        )}
 
         {/* ORDER SUMMARY */}
         <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }} className="bg-white rounded-2xl shadow-sm overflow-hidden mb-6">

@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { FiShoppingBag, FiEdit2, FiCheck, FiX, FiSearch, FiUser, FiShoppingCart, FiArrowRight, FiTag, FiSmartphone, FiPackage } from "react-icons/fi";
+import { FiShoppingBag, FiEdit2, FiCheck, FiX, FiSearch, FiUser, FiShoppingCart, FiArrowRight, FiTag, FiSmartphone, FiPackage, FiMapPin } from "react-icons/fi";
 import Link from "next/link";
 import { getCart, removeFromCart, updateCartItem, CartItem } from "@/lib/cart";
 import { products } from "@/lib/products";
@@ -23,6 +23,7 @@ export default function CartPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [cartLoaded, setCartLoaded] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"gcash" | "cod">("cod");
+  const [address, setAddress] = useState({ fullName: "", phone: "", address: "", city: "", zip: "" });
   const dropdownRef = useRef<HTMLLIElement>(null);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -267,7 +268,7 @@ export default function CartPage() {
           </div>
 
           {/* RIGHT — ORDER SUMMARY */}
-          <div className="w-96 shrink-0 bg-[#faf9f7] px-10 py-10 flex flex-col">
+          <div className="w-96 shrink-0 bg-[#faf9f7] px-10 py-10 flex flex-col overflow-y-auto">
 
             <h2 className="text-lg font-bold mb-8">Order Summary</h2>
 
@@ -303,6 +304,20 @@ export default function CartPage() {
               </div>
             </div>
 
+            {/* SHIPPING ADDRESS */}
+            <div className="mb-6">
+              <p className="text-xs tracking-widest uppercase text-gray-400 font-medium mb-3 flex items-center gap-2"><FiMapPin /> Delivery Address</p>
+              <div className="space-y-2">
+                <input type="text" placeholder="Full Name" value={address.fullName} onChange={e => setAddress(p => ({ ...p, fullName: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-black bg-white" />
+                <input type="text" placeholder="Phone Number" value={address.phone} onChange={e => setAddress(p => ({ ...p, phone: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-black bg-white" />
+                <input type="text" placeholder="Street Address" value={address.address} onChange={e => setAddress(p => ({ ...p, address: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-black bg-white" />
+                <div className="flex gap-2">
+                  <input type="text" placeholder="City" value={address.city} onChange={e => setAddress(p => ({ ...p, city: e.target.value }))} className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-black bg-white" />
+                  <input type="text" placeholder="ZIP" value={address.zip} onChange={e => setAddress(p => ({ ...p, zip: e.target.value }))} className="w-20 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-black bg-white" />
+                </div>
+              </div>
+            </div>
+
             {/* PAYMENT METHOD */}
             <div className="mb-6">
               <p className="text-xs tracking-widest uppercase text-gray-400 font-medium mb-3">Payment Method</p>
@@ -330,7 +345,7 @@ export default function CartPage() {
               </div>
               {paymentMethod === "gcash" && (
                 <div className="mt-3 bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs text-blue-600">
-                  📱 GCash Number: <span className="font-bold">09XX-XXX-XXXX</span><br />
+                  📱 GCash Number: <span className="font-bold">0933-699-5665</span><br />
                   Send payment after order confirmation.
                 </div>
               )}
@@ -352,9 +367,13 @@ export default function CartPage() {
             {selectedItems.length > 0 ? (
               <button
                 onClick={() => {
+                  if (!address.fullName || !address.phone || !address.address || !address.city) {
+                    alert("Please fill in all delivery address fields."); return;
+                  }
                   const key = userId ? `chay_cart_${userId}` : "chay_cart_guest";
                   localStorage.setItem(key, JSON.stringify(selectedItems));
                   localStorage.setItem("chay_payment_method", paymentMethod);
+                  localStorage.setItem("chay_delivery_address", JSON.stringify(address));
                   router.push("/order-confirmation");
                 }}
                 className="w-full bg-black text-white py-4 text-sm font-bold tracking-widest uppercase hover:bg-gray-800 transition flex items-center justify-center gap-3 rounded-xl"

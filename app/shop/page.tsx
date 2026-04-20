@@ -9,6 +9,7 @@ import { FiSearch, FiUser, FiShoppingCart, FiFacebook, FiMapPin, FiPhone, FiMail
 import { supabase } from "@/lib/supabase";
 import { products } from "@/lib/products";
 import { getCart, addToCart } from "@/lib/cart";
+import { getStockMap, deductStock, StockMap } from "@/lib/stock";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function ShopPage() {
@@ -21,6 +22,7 @@ export default function ShopPage() {
   const [cartCount, setCartCount] = useState(0);
   const [addedId, setAddedId] = useState<number | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [stockMap, setStockMap] = useState<StockMap>({});
   const dropdownRef = useRef<HTMLLIElement>(null);
 
   const filteredProducts = filter === "All"
@@ -32,9 +34,12 @@ export default function ShopPage() {
     if (search.trim()) router.push(`/search?q=${encodeURIComponent(search.trim())}`);
   };
 
-  const handleAddToCart = (item: typeof products[0]) => {
+  const handleAddToCart = async (item: typeof products[0]) => {
     if (!username) { router.push("/login"); return; }
+    if ((stockMap[item.id] ?? 0) <= 0) return;
     addToCart({ id: item.id, name: item.name, img: item.img, price: item.price, size: item.sizes[0], category: item.category }, userId ?? undefined);
+    await deductStock(item.id, 1);
+    setStockMap(prev => ({ ...prev, [item.id]: Math.max(0, (prev[item.id] ?? 0) - 1) }));
     setCartCount(getCart(userId ?? undefined).length);
     setAddedId(item.id);
     setTimeout(() => setAddedId(null), 2000);
@@ -63,13 +68,22 @@ export default function ShopPage() {
       if (error) { supabase.auth.signOut(); setLoaded(true); return; }
       getUser(session?.user ?? null);
     });
+    getStockMap().then(setStockMap);
+
+    const stockChannel = supabase
+      .channel("shop-stock")
+      .on("postgres_changes", { event: "*", schema: "public", table: "stock" }, (payload: any) => {
+        const { product_id, quantity } = payload.new;
+        setStockMap(prev => ({ ...prev, [product_id]: quantity }));
+      })
+      .subscribe();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "TOKEN_REFRESHED" || event === "SIGNED_IN") getUser(session?.user ?? null);
       else if (event === "SIGNED_OUT") { setUsername(null); setLoaded(true); }
     });
 
-    return () => subscription.unsubscribe();
+    return () => { subscription.unsubscribe(); supabase.removeChannel(stockChannel); };
   }, []);
 
   useEffect(() => { setCartCount(getCart(userId ?? undefined).length); }, [loaded, userId]);
@@ -189,8 +203,13 @@ export default function ShopPage() {
               >
                 <div className="group relative overflow-hidden bg-white cursor-pointer shadow-sm hover:shadow-lg transition duration-300">
                   <Link href={`/product/${item.id}`}>
-                    <div className="overflow-hidden">
+                    <div className="overflow-hidden relative">
                       <img src={item.img} alt={item.name} className="w-full h-[280px] object-cover transition-transform duration-700 group-hover:scale-110" />
+                      {(stockMap[item.id] ?? 1) === 0 && (
+                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                          <span className="bg-white text-black text-xs font-bold px-3 py-1 rounded-full tracking-widest uppercase">Out of Stock</span>
+                        </div>
+                      )}
                     </div>
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition duration-300" />
                   </Link>
@@ -199,14 +218,17 @@ export default function ShopPage() {
                     <p className="text-sm font-bold text-[#c9a98a] mt-1">₱{item.price.toLocaleString()}</p>
                     <button
                       onClick={() => handleAddToCart(item)}
+                      disabled={(stockMap[item.id] ?? 1) === 0}
                       className={`mt-3 w-full py-2 text-xs font-bold tracking-widest uppercase transition rounded-lg flex items-center justify-center gap-2 ${
-                        addedId === item.id
+                        (stockMap[item.id] ?? 1) === 0
+                          ? "bg-gray-300 text-gray-400 cursor-not-allowed"
+                          : addedId === item.id
                           ? "bg-green-500 text-white"
                           : "bg-black text-white hover:bg-gray-800"
                       }`}
                     >
                       <FiShoppingBag className="text-sm" />
-                      {addedId === item.id ? "Added!" : "Add to Cart"}
+                      {(stockMap[item.id] ?? 1) === 0 ? "Out of Stock" : addedId === item.id ? "Added!" : "Add to Cart"}
                     </button>
                   </div>
                 </div>

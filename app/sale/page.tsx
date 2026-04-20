@@ -11,7 +11,7 @@ import { products } from "@/lib/products";
 import { getCart } from "@/lib/cart";
 import { motion } from "framer-motion";
 
-const saleItems = products.map(p => ({ ...p, discount: p.category === "Dress" ? 20 : p.category === "Watch" ? 15 : 10 }));
+const saleItems = products.filter(p => p.salePrice !== undefined);
 
 export default function SalePage() {
   const router = useRouter();
@@ -100,6 +100,7 @@ export default function SalePage() {
                 {username ? (
                   <>
                     <Link href="/profile" onClick={() => setDropdown(false)} className="block px-4 py-2 text-sm hover:bg-gray-100">Profile</Link>
+                    <Link href="/orders" onClick={() => setDropdown(false)} className="block px-4 py-2 text-sm hover:bg-gray-100">My Orders</Link>
                     <button onClick={handleLogout} className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-100">Logout</button>
                   </>
                 ) : (
@@ -132,7 +133,8 @@ export default function SalePage() {
 
         <div className="grid grid-cols-4 gap-5">
           {saleItems.map((item, i) => {
-            const salePrice = Math.round(item.price * (1 - item.discount / 100));
+            const salePrice = item.salePrice!;
+            const discount = Math.round((1 - salePrice / item.price) * 100);
             return (
               <motion.div key={item.id} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.35, delay: i * 0.04 }}>
                 <Link href={loaded && !username ? "/login" : `/product/${item.id}`}>
@@ -143,7 +145,7 @@ export default function SalePage() {
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition duration-300" />
                     {/* DISCOUNT BADGE */}
                     <div className="absolute top-3 right-3 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded">
-                      -{item.discount}%
+                      -{discount}%
                     </div>
                     <div className="absolute top-3 left-3 bg-white/90 text-[10px] tracking-widest uppercase px-2 py-1 font-semibold text-gray-600">
                       {item.category}

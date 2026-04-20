@@ -22,9 +22,12 @@ export default function Home() {
   const [userId, setUserId] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
   const [stockMap, setStockMap] = useState<StockMap>({});
+  const [visibleCount, setVisibleCount] = useState(8);
 
   const filteredProducts = (filter === "All" ? products : products.filter(p => p.category === filter))
     .filter(p => p.name.toLowerCase().includes(search.toLowerCase()) || p.category.toLowerCase().includes(search.toLowerCase()));
+
+  const visibleProducts = filteredProducts.slice(0, visibleCount);
 
   const handleAddToCart = async (e: React.MouseEvent, item: typeof products[0]) => {
     e.preventDefault();
@@ -104,23 +107,6 @@ export default function Home() {
 
         {/* SECTION HEADER */}
         <div className="max-w-6xl mx-auto">
-          {/* SEARCH BAR */}
-          <div className="mb-8">
-            <div className="flex items-center border border-gray-300 rounded-full px-5 py-3 gap-3 max-w-xl mx-auto hover:border-gray-500 transition bg-white shadow-sm">
-              <FiSearch className="text-gray-400 text-lg shrink-0" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search products..."
-                className="outline-none bg-transparent flex-1 text-sm placeholder-gray-400"
-              />
-              {search && (
-                <button onClick={() => setSearch("")} className="text-gray-400 hover:text-black transition text-xs">✕</button>
-              )}
-            </div>
-          </div>
-
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
             <div>
               <span className="text-xs tracking-[0.4em] text-[#c9a98a] uppercase font-medium">Collection</span>
@@ -133,7 +119,7 @@ export default function Home() {
               {["All", "Dress", "Watch", "Herborist Scrub"].map((cat) => (
                 <button
                   key={cat}
-                  onClick={() => setFilter(cat === "Herborist Scrub" ? "Herborist Scrub" : cat)}
+                  onClick={() => { setFilter(cat === "Herborist Scrub" ? "Herborist Scrub" : cat); setVisibleCount(8); }}
                   className={`px-5 py-2 text-xs font-semibold tracking-widest uppercase border transition ${
                     filter === cat || (cat === "All" && filter === "All")
                       ? "bg-black text-white border-black"
@@ -143,6 +129,23 @@ export default function Home() {
                   {cat === "Herborist Scrub" ? "Body Essentials" : cat}
                 </button>
               ))}
+            </div>
+          </div>
+
+          {/* SEARCH BAR */}
+          <div className="mb-6">
+            <div className="flex items-center border border-gray-300 rounded-full px-5 py-3 gap-3 max-w-xl mx-auto hover:border-gray-500 transition bg-white shadow-sm">
+              <FiSearch className="text-gray-400 text-lg shrink-0" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setVisibleCount(8); }}
+                placeholder="Search products..."
+                className="outline-none bg-transparent flex-1 text-sm placeholder-gray-400"
+              />
+              {search && (
+                <button onClick={() => { setSearch(""); setVisibleCount(8); }} className="text-gray-400 hover:text-black transition text-xs">✕</button>
+              )}
             </div>
           </div>
 
@@ -156,7 +159,7 @@ export default function Home() {
           {/* GRID */}
           <AnimatePresence mode="wait">
             <div className="grid grid-cols-4 gap-5">
-              {filteredProducts.map((item, i) => (
+              {visibleProducts.map((item, i) => (
                 <motion.div
                   key={item.id}
                   initial={{ opacity: 0, y: 30 }}
@@ -209,6 +212,18 @@ export default function Home() {
               ))}
             </div>
           </AnimatePresence>
+
+          {/* LOAD MORE */}
+          {visibleCount < filteredProducts.length && (
+            <div className="flex justify-center mt-10">
+              <button
+                onClick={() => setVisibleCount(v => v + 8)}
+                className="px-10 py-3 border-2 border-black text-sm font-semibold tracking-widest uppercase hover:bg-black hover:text-white transition"
+              >
+                Load More ({filteredProducts.length - visibleCount} remaining)
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

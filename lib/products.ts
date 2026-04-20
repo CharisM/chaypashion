@@ -3,6 +3,7 @@ export type Product = {
   img: string;
   name: string;
   price: number;
+  salePrice?: number;
   category: string;
   description: string;
   sizes: string[];
@@ -11,9 +12,9 @@ export type Product = {
 };
 
 export const products: Product[] = [
-  { id: 1,  img: "/D1.jpg", name: "Classic Floral Dress",   price: 899,  category: "Dress", description: "A timeless floral dress perfect for casual outings and summer days.",              sizes: ["Free Size"], measurements: { bust: "86–90 cm", waist: "70–74 cm", length: "92 cm" } },
+  { id: 1,  img: "/D1.jpg", name: "Classic Floral Dress",   price: 899,  salePrice: 719, category: "Dress", description: "A timeless floral dress perfect for casual outings and summer days.",              sizes: ["Free Size"], measurements: { bust: "86–90 cm", waist: "70–74 cm", length: "92 cm" } },
   { id: 2,  img: "/D2.jpg", name: "Elegant Wrap Dress",     price: 1099, category: "Dress", description: "A flattering wrap-style dress that suits both day and evening wear.",            sizes: ["Free Size"], measurements: { bust: "88–92 cm", waist: "72–76 cm", length: "95 cm" } },
-  { id: 3,  img: "/D3.jpg", name: "Boho Maxi Dress",        price: 1199, category: "Dress", description: "Flowy bohemian maxi dress with intricate patterns for a free-spirited look.",    sizes: ["Free Size"], measurements: { bust: "90–94 cm", waist: "74–78 cm", length: "130 cm" } },
+  { id: 3,  img: "/D3.jpg", name: "Boho Maxi Dress",        price: 1199, salePrice: 959, category: "Dress", description: "Flowy bohemian maxi dress with intricate patterns for a free-spirited look.",    sizes: ["Free Size"], measurements: { bust: "90–94 cm", waist: "74–78 cm", length: "130 cm" } },
   { id: 4,  img: "/D4.jpg", name: "Mini Sundress",          price: 799,  category: "Dress", description: "Light and breezy mini sundress ideal for warm weather and beach trips.",         sizes: ["Free Size"], measurements: { bust: "84–88 cm", waist: "68–72 cm", length: "78 cm" } },
   { id: 5,  img: "/D5.jpg", name: "Ruffle Hem Dress",       price: 949,  category: "Dress", description: "Charming ruffle hem dress with a feminine silhouette perfect for any occasion.", sizes: ["Free Size"], measurements: { bust: "86–90 cm", waist: "70–74 cm", length: "88 cm" } },
   { id: 6,  img: "/D6.jpg", name: "Off-Shoulder Dress",     price: 1049, category: "Dress", description: "Trendy off-shoulder dress that highlights your neckline with effortless style.",  sizes: ["Free Size"], measurements: { bust: "88–92 cm", waist: "72–76 cm", length: "90 cm" } },
@@ -24,7 +25,7 @@ export const products: Product[] = [
     { color: "Rose Gold", img: "/WD1.jpg" },
     { color: "Silver",    img: "/WD2.jpg" },
   ]},
-  { id: 15, img: "/W1.jpg", name: "Fossil Neutra Watch", price: 3499, category: "Watch", description: "The Fossil Neutra features a clean minimalist design with a slim case and genuine leather strap. Available in multiple colors.", sizes: ["One Size"], variants: [
+  { id: 15, img: "/W1.jpg", name: "Fossil Neutra Watch", price: 3499, salePrice: 2974, category: "Watch", description: "The Fossil Neutra features a clean minimalist design with a slim case and genuine leather strap. Available in multiple colors.", sizes: ["One Size"], variants: [
     { color: "Silver / White", img: "/W1.jpg" },
     { color: "Gold / Brown",   img: "/W2.jpg" },
   ]},
