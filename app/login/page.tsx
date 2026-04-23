@@ -14,10 +14,17 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) { alert(error.message); return; }
+    setError("");
+    if (!email || !password) { setError("Please fill in all fields."); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setError("Please enter a valid email address."); return; }
+    setLoading(true);
+    const { error: loginError } = await supabase.auth.signInWithPassword({ email, password });
+    setLoading(false);
+    if (loginError) { setError(loginError.message); return; }
     setTimeout(() => router.replace("/"), 100);
   };
 
@@ -58,11 +65,13 @@ export default function Login() {
         </div>
 
         {/* BUTTON */}
+        {error && <p className="text-red-500 text-xs mb-3 text-center">{error}</p>}
         <button
           onClick={handleLogin}
-          className="w-full flex items-center justify-center bg-black text-white py-3 rounded-xl hover:bg-gray-900 transition font-semibold shadow-lg"
+          disabled={loading}
+          className="w-full flex items-center justify-center bg-black text-white py-3 rounded-xl hover:bg-gray-900 transition font-semibold shadow-lg disabled:opacity-50"
         >
-          <FiLock className="mr-2" /> LOGIN
+          <FiLock className="mr-2" /> {loading ? "Logging in..." : "LOGIN"}
         </button>
 
         <p className="text-sm mt-5 text-center text-gray-700">

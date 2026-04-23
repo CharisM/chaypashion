@@ -14,6 +14,7 @@ export default function EditProfilePage() {
   const [username, setUsername] = useState("");
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
 
@@ -21,8 +22,9 @@ export default function EditProfilePage() {
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setTimeout(() => router.push("/login"), 0); return; }
-      const { data } = await supabase.from("profiles").select("username, phone, email").eq("id", user.id).single();
+      const { data } = await supabase.from("profiles").select("username, phone, email").eq("id", user.id).maybeSingle();
       if (data) { setUsername(data.username ?? ""); setPhone(data.phone ?? ""); }
+      setPageLoading(false);
     };
     load();
   }, []);
@@ -49,6 +51,11 @@ export default function EditProfilePage() {
         <Link href="/profile" className="text-sm text-gray-500 hover:text-black transition">← Back to Profile</Link>
       </nav>
 
+      {pageLoading ? (
+        <div className="flex items-center justify-center min-h-[70vh]">
+          <div className="w-8 h-8 border-2 border-black border-t-transparent rounded-full animate-spin" />
+        </div>
+      ) : (
       <div className="flex justify-center mt-16 px-4 pb-16">
         <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="bg-white rounded-3xl shadow-lg p-10 w-full max-w-md">
 
@@ -103,6 +110,7 @@ export default function EditProfilePage() {
 
         </motion.div>
       </div>
+      )}
 
       {/* FOOTER */}
       <footer className="bg-black text-gray-400 py-6 px-16 flex justify-between items-center">

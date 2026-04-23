@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 import { products } from "@/lib/products";
 import { motion, AnimatePresence } from "framer-motion";
 import { getCart, addToCart } from "@/lib/cart";
-import { getStockMap, StockMap, deductStock } from "@/lib/stock";
+import { getStockMap, StockMap } from "@/lib/stock";
 import Navbar from "@/components/Navbar";
 
 export default function Home() {
@@ -23,6 +23,7 @@ export default function Home() {
   const [username, setUsername] = useState<string | null>(null);
   const [stockMap, setStockMap] = useState<StockMap>({});
   const [visibleCount, setVisibleCount] = useState(8);
+  const [testimonials, setTestimonials] = useState<{ username: string; comment: string; rating: number; productName: string }[]>([]);
 
   const filteredProducts = (filter === "All" ? products : products.filter(p => p.category === filter))
     .filter(p => p.name.toLowerCase().includes(search.toLowerCase()) || p.category.toLowerCase().includes(search.toLowerCase()));
@@ -35,8 +36,6 @@ export default function Home() {
     if (!loaded || !username) { router.push("/login"); return; }
     if ((stockMap[item.id] ?? 0) <= 0) return;
     addToCart({ id: item.id, name: item.name, img: item.img, price: item.price, size: item.sizes[0], category: item.category }, userId ?? undefined);
-    await deductStock(item.id, 1);
-    setStockMap(prev => ({ ...prev, [item.id]: Math.max(0, (prev[item.id] ?? 0) - 1) }));
     setAddedId(item.id);
     setTimeout(() => setAddedId(null), 2000);
   };
@@ -44,7 +43,7 @@ export default function Home() {
   useEffect(() => {
     const getUser = async (user: any) => {
       if (user) {
-        const { data } = await supabase.from("profiles").select("username").eq("id", user.id).single();
+        const { data } = await supabase.from("profiles").select("username").eq("id", user.id).maybeSingle();
         setUsername(data?.username ?? user.email ?? null);
         setUserId(user.id);
       } else { setUsername(null); }
@@ -52,6 +51,16 @@ export default function Home() {
     };
     supabase.auth.getSession().then(({ data: { session } }) => getUser(session?.user ?? null));
     getStockMap().then(setStockMap);
+    // fetch top reviews for testimonials
+    supabase.from("reviews").select("username, comment, rating, product_id").eq("rating", 5).order("created_at", { ascending: false }).limit(3)
+      .then(({ data }) => {
+        if (data) setTestimonials(data.map(r => ({
+          username: r.username,
+          comment: r.comment,
+          rating: r.rating,
+          productName: products.find(p => p.id === r.product_id)?.name ?? "",
+        })));
+      });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "TOKEN_REFRESHED" || event === "SIGNED_IN") getUser(session?.user ?? null);
       else if (event === "SIGNED_OUT") { setUsername(null); setUserId(null); setLoaded(true); }
@@ -266,6 +275,7 @@ export default function Home() {
       </div>
 
       {/* TESTIMONIALS */}
+      {testimonials.length > 0 && (
       <div className="bg-gray-50 py-20 px-10">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
@@ -273,54 +283,29 @@ export default function Home() {
             <h2 className="text-3xl font-bold mt-2">What Our Customers Say</h2>
           </div>
           <div className="grid grid-cols-3 gap-8">
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5 }}
-              className="bg-white p-6 rounded-xl shadow-sm"
-            >
-              <div className="flex gap-1 mb-4">
-                {[...Array(5)].map((_, i) => <span key={i} className="text-yellow-400">★</span>)}
-              </div>
-              <p className="text-sm text-gray-600 mb-4 italic">
-                "The dresses are absolutely beautiful! Great quality and fast shipping. Will definitely order again."
-              </p>
-              <p className="text-xs font-semibold">— Maria Santos</p>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="bg-white p-6 rounded-xl shadow-sm"
-            >
-              <div className="flex gap-1 mb-4">
-                {[...Array(5)].map((_, i) => <span key={i} className="text-yellow-400">★</span>)}
-              </div>
-              <p className="text-sm text-gray-600 mb-4 italic">
-                "Bought a Fossil watch and it's authentic! Love the packaging and customer service was excellent."
-              </p>
-              <p className="text-xs font-semibold">— John Reyes</p>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="bg-white p-6 rounded-xl shadow-sm"
-            >
-              <div className="flex gap-1 mb-4">
-                {[...Array(5)].map((_, i) => <span key={i} className="text-yellow-400">★</span>)}
-              </div>
-              <p className="text-sm text-gray-600 mb-4 italic">
-                "The Herborist scrubs are amazing! My skin feels so smooth and refreshed. Highly recommend!"
-              </p>
-              <p className="text-xs font-semibold">— Ana Cruz</p>
-            </motion.div>
+            {testimonials.map((t, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: i * 0.1 }}
+                className="bg-white p-6 rounded-xl shadow-sm"
+              >
+                <div className="flex gap-1 mb-4">
+                  {[...Array(5)].map((_, s) => (
+                    <span key={s} className={s < t.rating ? "text-yellow-400" : "text-gray-200"}>★</span>
+                  ))}
+                </div>
+                <p className="text-sm text-gray-600 mb-4 italic">"{t.comment}"</p>
+                <p className="text-xs font-semibold">— {t.username}</p>
+                {t.productName && <p className="text-[10px] text-gray-400 mt-0.5">on {t.productName}</p>}
+              </motion.div>
+            ))}
           </div>
         </div>
       </div>
+      )}
 
       {/* FOOTER */}
       <footer className="bg-black text-gray-400 pt-16 pb-8 px-16">

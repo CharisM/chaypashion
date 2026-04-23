@@ -21,6 +21,8 @@ export default function WishlistPage() {
   const [wishlist, setWishlist] = useState<Product[]>([]);
   const [addedId, setAddedId] = useState<number | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [visibleCount, setVisibleCount] = useState(9);
+  const visibleWishlist = wishlist.slice(0, visibleCount);
   const dropdownRef = useRef<HTMLLIElement>(null);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -37,7 +39,8 @@ export default function WishlistPage() {
 
   const handleRemove = async (id: number) => {
     if (!userId) return;
-    await removeFromWishlist(userId, id);
+    const { error } = await removeFromWishlist(userId, id);
+    if (error) { alert("Failed to remove item. Please try again."); return; }
     setWishlist(prev => prev.filter(p => p.id !== id));
   };
 
@@ -51,7 +54,7 @@ export default function WishlistPage() {
   useEffect(() => {
     const getUser = async (user: any) => {
       if (user) {
-        const { data } = await supabase.from("profiles").select("username").eq("id", user.id).single();
+        const { data } = await supabase.from("profiles").select("username").eq("id", user.id).maybeSingle();
         setUsername(data?.username ?? user.email ?? null);
         setUserId(user.id);
         const wl = await getWishlist(user.id);
@@ -164,7 +167,7 @@ export default function WishlistPage() {
         ) : (
           <div className="grid grid-cols-3 gap-6">
             <AnimatePresence>
-              {wishlist.map((item, i) => (
+              {visibleWishlist.map((item, i) => (
                 <motion.div
                   key={item.id}
                   initial={{ opacity: 0, y: 20 }}
@@ -198,6 +201,16 @@ export default function WishlistPage() {
               ))}
             </AnimatePresence>
           </div>
+          {visibleCount < wishlist.length && (
+            <div className="flex justify-center mt-10">
+              <button
+                onClick={() => setVisibleCount(v => v + 9)}
+                className="px-10 py-3 border-2 border-black text-sm font-semibold tracking-widest uppercase hover:bg-black hover:text-white transition"
+              >
+                Load More ({wishlist.length - visibleCount} remaining)
+              </button>
+            </div>
+          )}
         )}
         </>
         )}

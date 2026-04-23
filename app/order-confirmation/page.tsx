@@ -7,6 +7,7 @@ import Link from "next/link";
 import { FiCheckCircle, FiFacebook, FiShoppingBag, FiMapPin } from "react-icons/fi";
 import { getCart, CartItem } from "@/lib/cart";
 import { saveOrder, clearCart } from "@/lib/orders";
+import { deductStock } from "@/lib/stock";
 import { supabase } from "@/lib/supabase";
 import { motion } from "framer-motion";
 
@@ -15,6 +16,7 @@ export default function OrderConfirmationPage() {
   const [orderNumber, setOrderNumber] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [deliveryAddress, setDeliveryAddress] = useState<{ fullName: string; phone: string; address: string; city: string; zip: string } | null>(null);
+  const [orderError, setOrderError] = useState("");
 
   useEffect(() => {
     const load = async () => {
@@ -28,6 +30,7 @@ export default function OrderConfirmationPage() {
       const savedAddress = localStorage.getItem("chay_delivery_address");
       const parsedAddress = savedAddress ? JSON.parse(savedAddress) : null;
       setDeliveryAddress(parsedAddress);
+      const gcashProofUrl = localStorage.getItem("chay_gcash_proof_url") ?? undefined;
       const num = "CF-" + Math.random().toString(36).substring(2, 8).toUpperCase();
       const subtotalAmt = cartItems.reduce((sum, item) => sum + item.price * (item.qty ?? 1), 0);
       const order = {
@@ -39,32 +42,45 @@ export default function OrderConfirmationPage() {
         date: new Date().toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" }),
         expectedDelivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" }),
         delivered: false,
+        status: "pending" as const,
+        paymentStatus: (payment === "gcash" ? "unpaid" : "paid") as const,
         paymentMethod: payment,
-        deliveryAddress: parsedAddress,
+        customerName: parsedAddress?.fullName,
+        customerPhone: parsedAddress?.phone,
+        customerAddress: parsedAddress ? `${parsedAddress.address}, ${parsedAddress.city}${parsedAddress.zip ? ` ${parsedAddress.zip}` : ""}` : undefined,
+        gcashProofUrl,
       };
-      await saveOrder(order, userId);
+      const { error: saveError } = await saveOrder(order, userId);
+      if (saveError) { setOrderError("Failed to save your order. Please contact support."); return; }
+      const stockResults = await Promise.all(cartItems.map(item => deductStock(item.id, item.qty ?? 1)));
+      if (stockResults.some(r => r.error)) console.error("Some stock deductions failed");
       clearCart(userId);
       localStorage.removeItem("chay_payment_method");
       localStorage.removeItem("chay_delivery_address");
+      localStorage.removeItem("chay_gcash_proof_url");
 
-      // send confirmation email
-      const { data: profile } = await supabase.from("profiles").select("email").eq("id", userId).single();
-      const userEmail = profile?.email ?? user.email;
+      // send confirmation email — use auth email directly, not profiles
+      const userEmail = user.email;
       if (userEmail) {
-        await fetch("/api/send-order-email", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: userEmail,
-            orderNumber: num,
-            items: cartItems,
-            subtotal: subtotalAmt,
-            shipping: 150,
-            total: subtotalAmt + 150,
-            paymentMethod: payment,
-            deliveryAddress: parsedAddress,
-          }),
-        });
+        try {
+          await fetch("/api/send-order-email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: userEmail,
+              orderNumber: num,
+              items: cartItems,
+              subtotal: subtotalAmt,
+              shipping: 150,
+              total: subtotalAmt + 150,
+              paymentMethod: payment,
+              deliveryAddress: parsedAddress,
+            }),
+          });
+        } catch (e) {
+          // email failure should not block order confirmation
+          console.error("Email send failed:", e);
+        }
       }
       setItems(cartItems);
       setOrderNumber(num);
@@ -87,7 +103,14 @@ export default function OrderConfirmationPage() {
 
       <div className="max-w-2xl mx-auto px-6 py-16">
 
-        {/* SUCCESS HEADER */}
+        {orderError ? (
+          <div className="text-center py-20">
+            <p className="text-red-500 text-lg font-semibold mb-2">Something went wrong</p>
+            <p className="text-gray-400 text-sm">{orderError}</p>
+          </div>
+        ) : (
+        <>
+        {/* SUCCESS HEADER */}}
         <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }} className="text-center mb-12">
           <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
             <FiCheckCircle className="text-green-500 text-4xl" />
@@ -166,6 +189,8 @@ export default function OrderConfirmationPage() {
             View Profile
           </Link>
         </div>
+        </>
+        )}
 
       </div>
 

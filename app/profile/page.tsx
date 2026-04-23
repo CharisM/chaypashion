@@ -34,7 +34,7 @@ export default function Profile() {
     const getProfile = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setTimeout(() => router.push("/login"), 0); return; }
-      const { data } = await supabase.from("profiles").select("username, phone, email").eq("id", user.id).single();
+      const { data } = await supabase.from("profiles").select("username, phone, email").eq("id", user.id).maybeSingle();
       setProfile(data);
       setLoading(false);
     };
@@ -44,7 +44,7 @@ export default function Profile() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUsername(session?.user?.email ?? null);
-      supabase.from("profiles").select("username").eq("id", session?.user?.id ?? "").single()
+      supabase.from("profiles").select("username").eq("id", session?.user?.id ?? "").maybeSingle()
         .then(({ data }) => { if (data) setUsername(data.username); });
     });
     setCartCount(getCart().length);

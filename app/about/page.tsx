@@ -27,7 +27,7 @@ export default function About() {
   useEffect(() => {
     const getUser = async (user: any) => {
       if (user) {
-        const { data } = await supabase.from("profiles").select("username").eq("id", user.id).single();
+        const { data } = await supabase.from("profiles").select("username").eq("id", user.id).maybeSingle();
         setUsername(data?.username ?? user.email ?? null);
         setUserId(user.id);
         setCartCount(getCart(user.id).length);

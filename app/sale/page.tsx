@@ -10,6 +10,7 @@ import { supabase } from "@/lib/supabase";
 import { products } from "@/lib/products";
 import { getCart } from "@/lib/cart";
 import { motion } from "framer-motion";
+import { ProductSkeleton } from "@/components/LoadingStates";
 
 const saleItems = products.filter(p => p.salePrice !== undefined);
 
@@ -20,6 +21,8 @@ export default function SalePage() {
   const [dropdown, setDropdown] = useState(false);
   const [search, setSearch] = useState("");
   const [cartCount, setCartCount] = useState(0);
+  const [visibleCount, setVisibleCount] = useState(8);
+  const paginatedSaleItems = saleItems.slice(0, visibleCount);
   const dropdownRef = useRef<HTMLLIElement>(null);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -37,7 +40,7 @@ export default function SalePage() {
   useEffect(() => {
     const getUser = async (user: any) => {
       if (user) {
-        const { data } = await supabase.from("profiles").select("username").eq("id", user.id).single();
+        const { data } = await supabase.from("profiles").select("username").eq("id", user.id).maybeSingle();
         setUsername(data?.username ?? user.email ?? null);
       } else { setUsername(null); }
       setLoaded(true);
@@ -131,8 +134,9 @@ export default function SalePage() {
           <div className="h-px flex-1 bg-gray-200" />
         </div>
 
+        {!loaded ? <ProductSkeleton count={8} /> : (
         <div className="grid grid-cols-4 gap-5">
-          {saleItems.map((item, i) => {
+          {paginatedSaleItems.map((item, i) => {
             const salePrice = item.salePrice!;
             const discount = Math.round((1 - salePrice / item.price) * 100);
             return (
@@ -163,9 +167,18 @@ export default function SalePage() {
             );
           })}
         </div>
+        )}
+        {visibleCount < saleItems.length && (
+          <div className="flex justify-center mt-10">
+            <button
+              onClick={() => setVisibleCount(v => v + 8)}
+              className="px-10 py-3 border-2 border-black text-sm font-semibold tracking-widest uppercase hover:bg-black hover:text-white transition"
+            >
+              Load More ({saleItems.length - visibleCount} remaining)
+            </button>
+          </div>
+        )}
       </div>
-
-      {/* FOOTER */}
       <footer className="bg-black text-gray-400 pt-16 pb-8 px-16">
         <div className="grid grid-cols-5 gap-10 pb-12 border-b border-gray-800">
           <div className="col-span-1">

@@ -9,8 +9,9 @@ import { FiSearch, FiUser, FiShoppingCart, FiFacebook, FiMapPin, FiPhone, FiMail
 import { supabase } from "@/lib/supabase";
 import { products } from "@/lib/products";
 import { getCart, addToCart } from "@/lib/cart";
-import { getStockMap, deductStock, StockMap } from "@/lib/stock";
+import { getStockMap, StockMap } from "@/lib/stock";
 import { motion, AnimatePresence } from "framer-motion";
+import { ProductSkeleton } from "@/components/LoadingStates";
 
 export default function ShopPage() {
   const router = useRouter();
@@ -23,11 +24,14 @@ export default function ShopPage() {
   const [addedId, setAddedId] = useState<number | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [stockMap, setStockMap] = useState<StockMap>({});
+  const [visibleCount, setVisibleCount] = useState(8);
   const dropdownRef = useRef<HTMLLIElement>(null);
 
   const filteredProducts = filter === "All"
     ? products
     : products.filter(p => p.category === filter);
+
+  const visibleProducts = filteredProducts.slice(0, visibleCount);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,8 +42,6 @@ export default function ShopPage() {
     if (!username) { router.push("/login"); return; }
     if ((stockMap[item.id] ?? 0) <= 0) return;
     addToCart({ id: item.id, name: item.name, img: item.img, price: item.price, size: item.sizes[0], category: item.category }, userId ?? undefined);
-    await deductStock(item.id, 1);
-    setStockMap(prev => ({ ...prev, [item.id]: Math.max(0, (prev[item.id] ?? 0) - 1) }));
     setCartCount(getCart(userId ?? undefined).length);
     setAddedId(item.id);
     setTimeout(() => setAddedId(null), 2000);
@@ -55,7 +57,7 @@ export default function ShopPage() {
   useEffect(() => {
     const getUser = async (user: any) => {
       if (user) {
-        const { data } = await supabase.from("profiles").select("username").eq("id", user.id).single();
+        const { data } = await supabase.from("profiles").select("username").eq("id", user.id).maybeSingle();
         setUsername(data?.username ?? user.email ?? null);
         setUserId(user.id);
       } else {
@@ -170,7 +172,7 @@ export default function ShopPage() {
             {["All", "Dress", "Watch", "Herborist Scrub"].map((cat) => (
               <button
                 key={cat}
-                onClick={() => setFilter(cat)}
+                onClick={() => { setFilter(cat); setVisibleCount(8); }}
                 className={`px-5 py-2 text-xs font-semibold tracking-widest uppercase border transition ${
                   filter === cat
                     ? "bg-black text-white border-black"
@@ -192,8 +194,9 @@ export default function ShopPage() {
 
         {/* GRID */}
         <AnimatePresence mode="wait">
+          {!loaded ? <ProductSkeleton count={8} /> : (
           <div className="grid grid-cols-4 gap-5">
-            {filteredProducts.map((item, i) => (
+            {visibleProducts.map((item, i) => (
               <motion.div
                 key={item.id}
                 initial={{ opacity: 0, y: 30 }}
@@ -235,7 +238,18 @@ export default function ShopPage() {
               </motion.div>
             ))}
           </div>
+          )}
         </AnimatePresence>
+        {visibleCount < filteredProducts.length && (
+          <div className="flex justify-center mt-10">
+            <button
+              onClick={() => setVisibleCount(v => v + 8)}
+              className="px-10 py-3 border-2 border-black text-sm font-semibold tracking-widest uppercase hover:bg-black hover:text-white transition"
+            >
+              Load More ({filteredProducts.length - visibleCount} remaining)
+            </button>
+          </div>
+        )}
       </div>
 
       {/* FOOTER */}

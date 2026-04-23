@@ -10,6 +10,7 @@ import { supabase } from "@/lib/supabase";
 import { products } from "@/lib/products";
 import { getCart, addToCart } from "@/lib/cart";
 import { motion } from "framer-motion";
+import { ProductSkeleton } from "@/components/LoadingStates";
 
 function SearchResults() {
   const searchParams = useSearchParams();
@@ -23,6 +24,7 @@ function SearchResults() {
   const [cartCount, setCartCount] = useState(0);
   const [addedId, setAddedId] = useState<number | null>(null);
   const [dropdown, setDropdown] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(8);
   const dropdownRef = useRef<HTMLLIElement>(null);
 
   const filtered = query.trim()
@@ -33,11 +35,13 @@ function SearchResults() {
       )
     : [];
 
+  const visibleFiltered = filtered.slice(0, visibleCount);
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       const user = session?.user ?? null;
       if (user) {
-        supabase.from("profiles").select("username").eq("id", user.id).single()
+        supabase.from("profiles").select("username").eq("id", user.id).maybeSingle()
           .then(({ data }) => setUsername(data?.username ?? user.email ?? null));
         setUserId(user.id);
         setCartCount(getCart(user.id).length);
@@ -149,6 +153,8 @@ function SearchResults() {
             <FiSearch className="text-5xl text-gray-200" />
             <p className="text-gray-400 text-sm">Type something in the search bar above.</p>
           </div>
+        ) : !loaded ? (
+          <ProductSkeleton count={4} />
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 gap-4">
             <FiSearch className="text-5xl text-gray-200" />
@@ -159,8 +165,9 @@ function SearchResults() {
             </Link>
           </div>
         ) : (
+          <>
           <div className="grid grid-cols-4 gap-5">
-            {filtered.map((item, i) => (
+            {visibleFiltered.map((item, i) => (
               <motion.div
                 key={item.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -192,6 +199,17 @@ function SearchResults() {
               </motion.div>
             ))}
           </div>
+          {visibleCount < filtered.length && (
+            <div className="flex justify-center mt-10">
+              <button
+                onClick={() => setVisibleCount(v => v + 8)}
+                className="px-10 py-3 border-2 border-black text-sm font-semibold tracking-widest uppercase hover:bg-black hover:text-white transition"
+              >
+                Load More ({filtered.length - visibleCount} remaining)
+              </button>
+            </div>
+          )}
+          </>
         )}
       </div>
     </div>

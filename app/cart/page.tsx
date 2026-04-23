@@ -24,6 +24,9 @@ export default function CartPage() {
   const [cartLoaded, setCartLoaded] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"gcash" | "cod">("cod");
   const [address, setAddress] = useState({ fullName: "", phone: "", address: "", city: "", zip: "" });
+  const [gcashProof, setGcashProof] = useState<File | null>(null);
+  const [gcashProofPreview, setGcashProofPreview] = useState<string | null>(null);
+  const [uploadingProof, setUploadingProof] = useState(false);
   const dropdownRef = useRef<HTMLLIElement>(null);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -45,7 +48,7 @@ export default function CartPage() {
       setCart(cartItems);
       setSelected(cartItems.map((_, i) => i));
       setCartLoaded(true);
-      supabase.from("profiles").select("username").eq("id", user.id).single()
+      supabase.from("profiles").select("username").eq("id", user.id).maybeSingle()
         .then(({ data }) => setUsername(data?.username ?? user.email ?? null));
     };
     check();
@@ -309,7 +312,10 @@ export default function CartPage() {
               <p className="text-xs tracking-widest uppercase text-gray-400 font-medium mb-3 flex items-center gap-2"><FiMapPin /> Delivery Address</p>
               <div className="space-y-2">
                 <input type="text" placeholder="Full Name" value={address.fullName} onChange={e => setAddress(p => ({ ...p, fullName: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-black bg-white" />
-                <input type="text" placeholder="Phone Number" value={address.phone} onChange={e => setAddress(p => ({ ...p, phone: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-black bg-white" />
+                <input type="text" placeholder="Phone Number (09XXXXXXXXX)" value={address.phone} onChange={e => setAddress(p => ({ ...p, phone: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-black bg-white" />
+                {address.phone && !/^09\d{9}$/.test(address.phone) && (
+                  <p className="text-red-400 text-[10px] mt-1 px-1">Must be 11 digits starting with 09</p>
+                )}
                 <input type="text" placeholder="Street Address" value={address.address} onChange={e => setAddress(p => ({ ...p, address: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-black bg-white" />
                 <div className="flex gap-2">
                   <input type="text" placeholder="City" value={address.city} onChange={e => setAddress(p => ({ ...p, city: e.target.value }))} className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-black bg-white" />
@@ -344,9 +350,37 @@ export default function CartPage() {
                 </button>
               </div>
               {paymentMethod === "gcash" && (
-                <div className="mt-3 bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs text-blue-600">
-                  📱 GCash Number: <span className="font-bold">0933-699-5665</span><br />
-                  Send payment after order confirmation.
+                <div className="mt-3 bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs text-blue-600 space-y-3">
+                  <p>📱 GCash Number: <span className="font-bold">0933-699-5665</span></p>
+                  <p>Send payment then upload your screenshot below.</p>
+                  <div>
+                    <label className="block text-[10px] tracking-widest uppercase text-blue-500 font-semibold mb-1">Upload Proof of Payment</label>
+                    {gcashProofPreview ? (
+                      <div className="relative">
+                        <img src={gcashProofPreview} alt="GCash proof" className="w-full h-36 object-cover rounded-lg border border-blue-200" />
+                        <button
+                          onClick={() => { setGcashProof(null); setGcashProofPreview(null); }}
+                          className="absolute top-1 right-1 w-6 h-6 bg-white rounded-full shadow flex items-center justify-center hover:bg-red-50"
+                        >
+                          <FiX className="text-red-400 text-xs" />
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-blue-200 rounded-xl cursor-pointer hover:border-blue-400 transition bg-white">
+                        <FiSmartphone className="text-blue-300 text-xl mb-1" />
+                        <span className="text-[10px] text-blue-400">Click to upload screenshot</span>
+                        <input
+                          type="file" accept="image/*" className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            setGcashProof(file);
+                            setGcashProofPreview(URL.createObjectURL(file));
+                          }}
+                        />
+                      </label>
+                    )}
+                  </div>
                 </div>
               )}
               {paymentMethod === "cod" && (
@@ -366,19 +400,39 @@ export default function CartPage() {
 
             {selectedItems.length > 0 ? (
               <button
-                onClick={() => {
+                onClick={async () => {
                   if (!address.fullName || !address.phone || !address.address || !address.city) {
                     alert("Please fill in all delivery address fields."); return;
+                  }
+                  if (paymentMethod === "gcash" && !gcashProof) {
+                    alert("Please upload your GCash proof of payment."); return;
+                  }
+                  if (address.phone && !/^09\d{9}$/.test(address.phone)) {
+                    alert("Phone number must be 11 digits starting with 09 (e.g. 09123456789)."); return;
+                  }
+                  setUploadingProof(true);
+                  let proofUrl: string | null = null;
+                  if (paymentMethod === "gcash" && gcashProof) {
+                    const ext = gcashProof.name.split(".").pop();
+                    const path = `gcash-proofs/${Date.now()}.${ext}`;
+                    const { error } = await supabase.storage.from("order-proofs").upload(path, gcashProof);
+                    if (!error) {
+                      const { data } = supabase.storage.from("order-proofs").getPublicUrl(path);
+                      proofUrl = data.publicUrl;
+                    }
                   }
                   const key = userId ? `chay_cart_${userId}` : "chay_cart_guest";
                   localStorage.setItem(key, JSON.stringify(selectedItems));
                   localStorage.setItem("chay_payment_method", paymentMethod);
                   localStorage.setItem("chay_delivery_address", JSON.stringify(address));
+                  if (proofUrl) localStorage.setItem("chay_gcash_proof_url", proofUrl);
+                  setUploadingProof(false);
                   router.push("/order-confirmation");
                 }}
-                className="w-full bg-black text-white py-4 text-sm font-bold tracking-widest uppercase hover:bg-gray-800 transition flex items-center justify-center gap-3 rounded-xl"
+                disabled={uploadingProof}
+                className="w-full bg-black text-white py-4 text-sm font-bold tracking-widest uppercase hover:bg-gray-800 transition flex items-center justify-center gap-3 rounded-xl disabled:opacity-60"
               >
-                Checkout ({selectedItems.length}) <FiArrowRight />
+                {uploadingProof ? "Uploading..." : <>Checkout ({selectedItems.length}) <FiArrowRight /></>}
               </button>
             ) : (
               <button disabled className="w-full bg-gray-200 text-gray-400 py-4 text-sm font-bold tracking-widest uppercase rounded-xl cursor-not-allowed">
