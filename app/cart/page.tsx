@@ -8,7 +8,7 @@ import { supabase } from "@/lib/supabase";
 import { FiShoppingBag, FiEdit2, FiCheck, FiX, FiSearch, FiUser, FiShoppingCart, FiArrowRight, FiTag, FiSmartphone, FiPackage, FiMapPin } from "react-icons/fi";
 import Link from "next/link";
 import { getCart, removeFromCart, updateCartItem, CartItem } from "@/lib/cart";
-import { products } from "@/lib/products";
+import { useProducts } from "@/lib/use-products";
 
 export default function CartPage() {
   const router = useRouter();
@@ -28,6 +28,7 @@ export default function CartPage() {
   const [gcashProofPreview, setGcashProofPreview] = useState<string | null>(null);
   const [uploadingProof, setUploadingProof] = useState(false);
   const dropdownRef = useRef<HTMLLIElement>(null);
+  const { products } = useProducts();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

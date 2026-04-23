@@ -7,9 +7,9 @@ import { useEffect, useState } from "react";
 import { FiSearch, FiFacebook, FiShoppingCart, FiMapPin, FiPhone, FiMail } from "react-icons/fi";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
-import { products } from "@/lib/products";
+import { useProducts } from "@/lib/use-products";
 import { motion, AnimatePresence } from "framer-motion";
-import { getCart, addToCart } from "@/lib/cart";
+import { addToCart } from "@/lib/cart";
 import { getStockMap, StockMap } from "@/lib/stock";
 import Navbar from "@/components/Navbar";
 
@@ -24,13 +24,14 @@ export default function Home() {
   const [stockMap, setStockMap] = useState<StockMap>({});
   const [visibleCount, setVisibleCount] = useState(8);
   const [testimonials, setTestimonials] = useState<{ username: string; comment: string; rating: number; productName: string }[]>([]);
+  const { products, loading: productsLoading } = useProducts();
 
   const filteredProducts = (filter === "All" ? products : products.filter(p => p.category === filter))
     .filter(p => p.name.toLowerCase().includes(search.toLowerCase()) || p.category.toLowerCase().includes(search.toLowerCase()));
 
   const visibleProducts = filteredProducts.slice(0, visibleCount);
 
-  const handleAddToCart = async (e: React.MouseEvent, item: typeof products[0]) => {
+  const handleAddToCart = async (e: React.MouseEvent, item: (typeof products)[number]) => {
     e.preventDefault();
     e.stopPropagation();
     if (!loaded || !username) { router.push("/login"); return; }
@@ -39,6 +40,21 @@ export default function Home() {
     setAddedId(item.id);
     setTimeout(() => setAddedId(null), 2000);
   };
+
+  useEffect(() => {
+    if (products.length === 0) return;
+
+    // fetch top reviews for testimonials
+    supabase.from("reviews").select("username, comment, rating, product_id").eq("rating", 5).order("created_at", { ascending: false }).limit(3)
+      .then(({ data }) => {
+        if (data) setTestimonials(data.map(r => ({
+          username: r.username,
+          comment: r.comment,
+          rating: r.rating,
+          productName: products.find(p => p.id === r.product_id)?.name ?? "",
+        })));
+      });
+  }, [products]);
 
   useEffect(() => {
     const getUser = async (user: any) => {
@@ -51,16 +67,6 @@ export default function Home() {
     };
     supabase.auth.getSession().then(({ data: { session } }) => getUser(session?.user ?? null));
     getStockMap().then(setStockMap);
-    // fetch top reviews for testimonials
-    supabase.from("reviews").select("username, comment, rating, product_id").eq("rating", 5).order("created_at", { ascending: false }).limit(3)
-      .then(({ data }) => {
-        if (data) setTestimonials(data.map(r => ({
-          username: r.username,
-          comment: r.comment,
-          rating: r.rating,
-          productName: products.find(p => p.id === r.product_id)?.name ?? "",
-        })));
-      });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "TOKEN_REFRESHED" || event === "SIGNED_IN") getUser(session?.user ?? null);
       else if (event === "SIGNED_OUT") { setUsername(null); setUserId(null); setLoaded(true); }
@@ -167,6 +173,13 @@ export default function Home() {
 
           {/* GRID */}
           <AnimatePresence mode="wait">
+            {!loaded || productsLoading ? (
+              <div className="grid grid-cols-4 gap-5">
+                {[...Array(8)].map((_, i) => (
+                  <div key={i} className="bg-white h-[360px] animate-pulse rounded-sm" />
+                ))}
+              </div>
+            ) : (
             <div className="grid grid-cols-4 gap-5">
               {visibleProducts.map((item, i) => (
                 <motion.div
@@ -220,6 +233,7 @@ export default function Home() {
                 </motion.div>
               ))}
             </div>
+            )}
           </AnimatePresence>
 
           {/* LOAD MORE */}

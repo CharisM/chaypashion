@@ -9,7 +9,7 @@ import { FiPackage, FiCheckCircle, FiChevronDown, FiChevronUp, FiClock, FiShield
 import { supabase } from "@/lib/supabase";
 import { getAllOrders, updateOrderStatus, updatePaymentStatus, getAllRefundRequests, updateRefundStatus, Order, OrderStatus, PaymentStatus, RefundRequest, isAdmin } from "@/lib/orders";
 import { getStockMap, setStock, StockMap, LOW_STOCK_THRESHOLD } from "@/lib/stock";
-import { products } from "@/lib/products";
+import { useProducts } from "@/lib/use-products";
 import { motion, AnimatePresence } from "framer-motion";
 
 const STATUS_FLOW: OrderStatus[] = ["pending", "processing", "shipped", "delivered", "cancelled"];
@@ -50,6 +50,7 @@ export default function AdminPage() {
   const [proofModal, setProofModal] = useState<{ url: string; orderNumber: string; paymentStatus: PaymentStatus } | null>(null);
   const [refunds, setRefunds] = useState<RefundRequest[]>([]);
   const [visibleCount, setVisibleCount] = useState(10);
+  const { products, loading: productsLoading } = useProducts();
 
   useEffect(() => {
     const check = async () => {
@@ -193,7 +194,7 @@ export default function AdminPage() {
       </div>
 
       <div className="max-w-6xl mx-auto px-6 py-10 space-y-6">
-        {loading ? (
+        {loading || productsLoading ? (
           <div className="flex items-center justify-center py-20">
             <div className="w-8 h-8 border-2 border-black border-t-transparent rounded-full animate-spin" />
           </div>
@@ -620,7 +621,7 @@ export default function AdminPage() {
               <div className="flex items-center border border-gray-200 rounded-xl px-3 py-2 gap-2 flex-1 min-w-[200px]">
                 <FiSearch className="text-gray-400 shrink-0" />
                 <input
-                  type="text" value={search} onChange={e => { setSearch(e.target.value); setVisibleCount(10); }}}
+                  type="text" value={search} onChange={e => { setSearch(e.target.value); setVisibleCount(10); }}
                   placeholder="Search by order #, name, phone..."
                   className="text-xs outline-none bg-transparent flex-1 placeholder-gray-400"
                 />

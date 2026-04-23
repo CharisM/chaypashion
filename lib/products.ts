@@ -1,3 +1,5 @@
+import { supabase } from "@/lib/supabase";
+
 export type Product = {
   id: number;
   img: string;
@@ -9,6 +11,22 @@ export type Product = {
   sizes: string[];
   measurements?: { bust: string; waist: string; length: string };
   variants?: { color: string; img: string }[];
+};
+
+type ProductRow = {
+  id?: number | string | null;
+  img?: string | null;
+  image?: string | null;
+  image_url?: string | null;
+  name?: string | null;
+  price?: number | string | null;
+  salePrice?: number | string | null;
+  sale_price?: number | string | null;
+  category?: string | null;
+  description?: string | null;
+  sizes?: string[] | string | null;
+  measurements?: Product["measurements"] | string | null;
+  variants?: Product["variants"] | string | null;
 };
 
 export const products: Product[] = [
@@ -51,3 +69,145 @@ export const products: Product[] = [
   { id: 28, img: "/oil.jpg",       name: "Hair Oil",   price: 599, category: "Herborist Scrub", description: "Nourishing body oil that deeply moisturizes and leaves skin soft and glowing.",        sizes: ["50ml","100ml"] },
   { id: 29, img: "/glutasoap.jpg", name: "Gluta Soap", price: 299, category: "Herborist Scrub", description: "Whitening gluta soap that brightens skin tone and removes dark spots effectively.",   sizes: ["1 bar","3 bars"] },
 ];
+
+const fallbackById = new Map(products.map((product) => [product.id, product]));
+
+const parseNumber = (value: number | string | null | undefined): number | undefined => {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim() !== "") {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return undefined;
+};
+
+const parseStringArray = (value: string[] | string | null | undefined, fallback: string[]): string[] => {
+  if (Array.isArray(value)) {
+    const clean = value.filter((item): item is string => typeof item === "string" && item.trim() !== "");
+    return clean.length > 0 ? clean : fallback;
+  }
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return fallback;
+
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) {
+        const clean = parsed.filter((item): item is string => typeof item === "string" && item.trim() !== "");
+        return clean.length > 0 ? clean : fallback;
+      }
+    } catch {}
+
+    const split = trimmed.split(",").map((item) => item.trim()).filter(Boolean);
+    return split.length > 0 ? split : fallback;
+  }
+
+  return fallback;
+};
+
+const parseMeasurements = (
+  value: Product["measurements"] | string | null | undefined,
+  fallback?: Product["measurements"]
+): Product["measurements"] | undefined => {
+  if (value && typeof value === "object" && !Array.isArray(value)) return value;
+  if (typeof value === "string" && value.trim() !== "") {
+    try {
+      const parsed = JSON.parse(value);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        return {
+          bust: String(parsed.bust ?? fallback?.bust ?? ""),
+          waist: String(parsed.waist ?? fallback?.waist ?? ""),
+          length: String(parsed.length ?? fallback?.length ?? ""),
+        };
+      }
+    } catch {}
+  }
+  return fallback;
+};
+
+const parseVariants = (
+  value: Product["variants"] | string | null | undefined,
+  fallback?: Product["variants"]
+): Product["variants"] | undefined => {
+  const normalize = (input: unknown): Product["variants"] | undefined => {
+    if (!Array.isArray(input)) return undefined;
+
+    const variants = input
+      .filter((item): item is { color?: unknown; img?: unknown; image?: unknown; image_url?: unknown } => !!item && typeof item === "object")
+      .map((item) => {
+        const color = typeof item.color === "string" ? item.color : "";
+        const img = typeof item.img === "string"
+          ? item.img
+          : typeof item.image === "string"
+          ? item.image
+          : typeof item.image_url === "string"
+          ? item.image_url
+          : "";
+
+        if (!color || !img) return null;
+        return { color, img };
+      })
+      .filter((item): item is { color: string; img: string } => item !== null);
+
+    return variants.length > 0 ? variants : fallback;
+  };
+
+  if (Array.isArray(value)) return normalize(value);
+  if (typeof value === "string" && value.trim() !== "") {
+    try {
+      return normalize(JSON.parse(value));
+    } catch {
+      return fallback;
+    }
+  }
+  return fallback;
+};
+
+const normalizeProductRow = (row: ProductRow): Product | null => {
+  const id = parseNumber(row.id);
+  if (id === undefined) return null;
+
+  const fallback = fallbackById.get(id);
+  const price = parseNumber(row.price) ?? fallback?.price;
+  if (price === undefined) return null;
+
+  return {
+    id,
+    img: row.img ?? row.image ?? row.image_url ?? fallback?.img ?? "",
+    name: row.name ?? fallback?.name ?? `Product ${id}`,
+    price,
+    salePrice: parseNumber(row.salePrice ?? row.sale_price) ?? fallback?.salePrice,
+    category: row.category ?? fallback?.category ?? "Uncategorized",
+    description: row.description ?? fallback?.description ?? "",
+    sizes: parseStringArray(row.sizes, fallback?.sizes ?? ["One Size"]),
+    measurements: parseMeasurements(row.measurements, fallback?.measurements),
+    variants: parseVariants(row.variants, fallback?.variants),
+  };
+};
+
+export const getProductsFromSupabase = async (): Promise<Product[]> => {
+  const { data, error } = await supabase.from("products").select("*").order("id", { ascending: true });
+
+  if (error) {
+    console.warn("Supabase products fetch failed, using fallback catalog.", error.message);
+    return products;
+  }
+
+  const normalized = (data ?? [])
+    .map((row) => normalizeProductRow(row as ProductRow))
+    .filter((product): product is Product => product !== null);
+
+  return normalized.length > 0 ? normalized : products;
+};
+
+export const getProductByIdFromSupabase = async (id: number): Promise<Product | undefined> => {
+  const { data, error } = await supabase.from("products").select("*").eq("id", id).maybeSingle();
+
+  if (error) {
+    console.warn(`Supabase product fetch failed for product ${id}, using fallback item.`, error.message);
+    return fallbackById.get(id);
+  }
+
+  return normalizeProductRow((data ?? {}) as ProductRow) ?? fallbackById.get(id);
+};

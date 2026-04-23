@@ -7,7 +7,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { FiSearch, FiUser, FiShoppingCart, FiArrowLeft } from "react-icons/fi";
 import { supabase } from "@/lib/supabase";
-import { products } from "@/lib/products";
+import { useProducts } from "@/lib/use-products";
 import { getCart, addToCart } from "@/lib/cart";
 import { motion } from "framer-motion";
 import { ProductSkeleton } from "@/components/LoadingStates";
@@ -26,6 +26,7 @@ function SearchResults() {
   const [dropdown, setDropdown] = useState(false);
   const [visibleCount, setVisibleCount] = useState(8);
   const dropdownRef = useRef<HTMLLIElement>(null);
+  const { products, loading: productsLoading } = useProducts();
 
   const filtered = query.trim()
     ? products.filter((p) =>
@@ -70,7 +71,7 @@ function SearchResults() {
     router.push("/");
   };
 
-  const handleAddToCart = (e: React.MouseEvent, item: typeof products[0]) => {
+  const handleAddToCart = (e: React.MouseEvent, item: (typeof products)[number]) => {
     e.preventDefault();
     e.stopPropagation();
     if (!username) { router.push("/login"); return; }
@@ -153,7 +154,7 @@ function SearchResults() {
             <FiSearch className="text-5xl text-gray-200" />
             <p className="text-gray-400 text-sm">Type something in the search bar above.</p>
           </div>
-        ) : !loaded ? (
+        ) : !loaded || productsLoading ? (
           <ProductSkeleton count={4} />
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 gap-4">

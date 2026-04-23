@@ -1,11 +1,12 @@
 import { supabase } from "@/lib/supabase";
-import { Product, products } from "./products";
+import { Product, getProductsFromSupabase } from "./products";
 
 export type { Product };
 
 export const getWishlist = async (userId: string): Promise<Product[]> => {
   const { data } = await supabase.from("wishlists").select("product_id").eq("user_id", userId);
   if (!data) return [];
+  const products = await getProductsFromSupabase();
   return data.map(row => products.find(p => p.id === row.product_id)).filter(Boolean) as Product[];
 };
 

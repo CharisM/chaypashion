@@ -7,12 +7,10 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FiSearch, FiUser, FiShoppingCart, FiFacebook, FiMapPin, FiPhone, FiMail } from "react-icons/fi";
 import { supabase } from "@/lib/supabase";
-import { products } from "@/lib/products";
+import { useProducts } from "@/lib/use-products";
 import { getCart } from "@/lib/cart";
 import { motion } from "framer-motion";
 import { ProductSkeleton } from "@/components/LoadingStates";
-
-const saleItems = products.filter(p => p.salePrice !== undefined);
 
 export default function SalePage() {
   const router = useRouter();
@@ -22,6 +20,8 @@ export default function SalePage() {
   const [search, setSearch] = useState("");
   const [cartCount, setCartCount] = useState(0);
   const [visibleCount, setVisibleCount] = useState(8);
+  const { products, loading: productsLoading } = useProducts();
+  const saleItems = products.filter(p => p.salePrice !== undefined);
   const paginatedSaleItems = saleItems.slice(0, visibleCount);
   const dropdownRef = useRef<HTMLLIElement>(null);
 
@@ -134,7 +134,7 @@ export default function SalePage() {
           <div className="h-px flex-1 bg-gray-200" />
         </div>
 
-        {!loaded ? <ProductSkeleton count={8} /> : (
+        {!loaded || productsLoading ? <ProductSkeleton count={8} /> : (
         <div className="grid grid-cols-4 gap-5">
           {paginatedSaleItems.map((item, i) => {
             const salePrice = item.salePrice!;

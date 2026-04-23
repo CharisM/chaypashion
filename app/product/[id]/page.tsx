@@ -5,9 +5,9 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { FiUser, FiSearch, FiShoppingCart, FiArrowLeft, FiFacebook } from "react-icons/fi";
+import { FiUser, FiShoppingCart, FiArrowLeft, FiFacebook } from "react-icons/fi";
 import { supabase } from "@/lib/supabase";
-import { products } from "@/lib/products";
+import { useProducts } from "@/lib/use-products";
 import { addToCart, getCart } from "@/lib/cart";
 import { getStock } from "@/lib/stock";
 import { getReviews, submitReview, getAverageRating, Review } from "@/lib/reviews";
@@ -16,6 +16,7 @@ import { motion } from "framer-motion";
 export default function ProductDetail() {
   const { id } = useParams();
   const router = useRouter();
+  const { products, loading: productsLoading } = useProducts();
   const product = products.find((p) => p.id === Number(id));
 
   const [username, setUsername] = useState<string | null>(null);
@@ -122,6 +123,12 @@ export default function ProductDetail() {
     setCartCount(getCart(userId ?? undefined).length);
     setTimeout(() => setCartMsg(""), 3000);
   };
+
+  if (productsLoading) return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="w-8 h-8 border-2 border-black border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
 
   if (!product) return (
     <div className="min-h-screen flex items-center justify-center">

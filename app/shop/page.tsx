@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FiSearch, FiUser, FiShoppingCart, FiFacebook, FiMapPin, FiPhone, FiMail, FiShoppingBag } from "react-icons/fi";
 import { supabase } from "@/lib/supabase";
-import { products } from "@/lib/products";
+import { useProducts } from "@/lib/use-products";
 import { getCart, addToCart } from "@/lib/cart";
 import { getStockMap, StockMap } from "@/lib/stock";
 import { motion, AnimatePresence } from "framer-motion";
@@ -26,6 +26,7 @@ export default function ShopPage() {
   const [stockMap, setStockMap] = useState<StockMap>({});
   const [visibleCount, setVisibleCount] = useState(8);
   const dropdownRef = useRef<HTMLLIElement>(null);
+  const { products, loading: productsLoading } = useProducts();
 
   const filteredProducts = filter === "All"
     ? products
@@ -38,7 +39,7 @@ export default function ShopPage() {
     if (search.trim()) router.push(`/search?q=${encodeURIComponent(search.trim())}`);
   };
 
-  const handleAddToCart = async (item: typeof products[0]) => {
+  const handleAddToCart = async (item: (typeof products)[number]) => {
     if (!username) { router.push("/login"); return; }
     if ((stockMap[item.id] ?? 0) <= 0) return;
     addToCart({ id: item.id, name: item.name, img: item.img, price: item.price, size: item.sizes[0], category: item.category }, userId ?? undefined);
@@ -194,7 +195,7 @@ export default function ShopPage() {
 
         {/* GRID */}
         <AnimatePresence mode="wait">
-          {!loaded ? <ProductSkeleton count={8} /> : (
+          {!loaded || productsLoading ? <ProductSkeleton count={8} /> : (
           <div className="grid grid-cols-4 gap-5">
             {visibleProducts.map((item, i) => (
               <motion.div
