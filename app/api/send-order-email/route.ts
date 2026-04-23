@@ -1,7 +1,13 @@
 import { Resend } from "resend";
 import { NextRequest, NextResponse } from "next/server";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+
+type EmailOrderItem = {
+  name: string;
+  size: string;
+  qty?: number;
+  price: number;
+};
 
 export async function POST(req: NextRequest) {
   if (!process.env.RESEND_API_KEY || process.env.RESEND_API_KEY === "<your_resend_api_key>") {
@@ -9,9 +15,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, skipped: true });
   }
 
+  const resend = new Resend(process.env.RESEND_API_KEY);
+
   const { email, orderNumber, items, subtotal, shipping, total, paymentMethod, deliveryAddress } = await req.json();
 
-  const itemRows = items.map((item: any) => `
+  const itemRows = (items as EmailOrderItem[]).map((item) => `
     <tr>
       <td style="padding:10px 0;border-bottom:1px solid #f0f0f0;vertical-align:middle;">
         <strong style="font-size:14px;color:#333;">${item.name}</strong><br/>

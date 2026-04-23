@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { FiPackage, FiFacebook, FiChevronDown, FiChevronUp, FiShoppingBag, FiCheckCircle, FiClock, FiX, FiTruck, FiMapPin } from "react-icons/fi";
+import { FiPackage, FiFacebook, FiChevronDown, FiChevronUp, FiShoppingBag, FiCheckCircle, FiClock, FiX, FiTruck } from "react-icons/fi";
 import { supabase } from "@/lib/supabase";
 import { getOrders, cancelOrder, submitRefundRequest, Order } from "@/lib/orders";
 import { motion, AnimatePresence } from "framer-motion";
@@ -50,7 +50,7 @@ export default function OrdersPage() {
       if (error) throw new Error(error);
       setOrders(prev => prev.map(o => o.orderNumber === orderNumber ? { ...o, status: "cancelled" } : o));
       setNotification({ message: `Order #${orderNumber} has been cancelled.`, orderNumber });
-    } catch (e) {
+    } catch {
       alert("Failed to cancel order. Please try again.");
     }
     setCancelling(null);
@@ -68,10 +68,10 @@ export default function OrdersPage() {
       setLoading(false);
 
       // real-time order status updates
-      const channel = supabase
-        .channel("orders-realtime")
-        .on("postgres_changes", { event: "UPDATE", schema: "public", table: "orders", filter: `user_id=eq.${user.id}` },
-          (payload: any) => {
+        const channel = supabase
+          .channel("orders-realtime")
+          .on("postgres_changes", { event: "UPDATE", schema: "public", table: "orders", filter: `user_id=eq.${user.id}` },
+          (payload: { new: { order_number: string; status: Order["status"]; delivered: boolean; payment_status: Order["paymentStatus"] } }) => {
             const updated = payload.new;
             setOrders(prev => prev.map(o =>
               o.orderNumber === updated.order_number
@@ -236,7 +236,10 @@ export default function OrdersPage() {
                           <div className="flex items-center gap-0">
                             {(["pending", "processing", "shipped", "delivered"] as const).map((step, idx, arr) => {
                               const stepIndex = arr.indexOf(step);
-                              const currentIndex = arr.indexOf(order.status as any) ?? 0;
+                              const activeStatus = arr.includes(order.status as typeof arr[number])
+                                ? (order.status as typeof arr[number])
+                                : "pending";
+                              const currentIndex = arr.indexOf(activeStatus);
                               const done = stepIndex <= currentIndex;
                               const active = stepIndex === currentIndex;
                               return (

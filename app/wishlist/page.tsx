@@ -10,6 +10,7 @@ import { supabase } from "@/lib/supabase";
 import { getWishlist, removeFromWishlist, Product } from "@/lib/wishlist";
 import { addToCart, getCart } from "@/lib/cart";
 import { motion, AnimatePresence } from "framer-motion";
+import type { User } from "@supabase/supabase-js";
 
 export default function WishlistPage() {
   const router = useRouter();
@@ -52,7 +53,7 @@ export default function WishlistPage() {
   };
 
   useEffect(() => {
-    const getUser = async (user: any) => {
+    const getUser = async (user: User | null) => {
       if (user) {
         const { data } = await supabase.from("profiles").select("username").eq("id", user.id).maybeSingle();
         setUsername(data?.username ?? user.email ?? null);
@@ -73,10 +74,6 @@ export default function WishlistPage() {
     });
     return () => subscription.unsubscribe();
   }, []);
-
-  useEffect(() => {
-    setCartCount(getCart(userId ?? undefined).length);
-  }, [loaded, userId]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {

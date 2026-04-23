@@ -1,7 +1,13 @@
 import { Resend } from "resend";
 import { NextRequest, NextResponse } from "next/server";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+
+type StatusEmailItem = {
+  name: string;
+  size: string;
+  qty?: number;
+  price: number;
+};
 
 const STATUS_INFO: Record<string, { emoji: string; label: string; message: string; color: string }> = {
   processing: {
@@ -36,6 +42,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, skipped: true });
   }
 
+  const resend = new Resend(process.env.RESEND_API_KEY);
+
   const { email, orderNumber, status, total, items, customerName, customerAddress, expectedDelivery } = await req.json();
 
   const info = STATUS_INFO[status];
@@ -53,7 +61,7 @@ export async function POST(req: NextRequest) {
         </tr>
       </thead>
       <tbody>
-        ${items.map((item: any) => `
+        ${(items as StatusEmailItem[]).map((item) => `
           <tr>
             <td style="padding:10px 0;border-bottom:1px solid #f0f0f0;font-size:14px;color:#333;">
               <strong>${item.name}</strong><br/>

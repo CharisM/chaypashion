@@ -1,0 +1,3 @@
+module.exports=[33290,a=>{"use strict";var b=a.i(7997);a.s(["default",0,function({children:a}){return(0,b.jsx)("html",{lang:"en",className:"h-full antialiased",style:{"--font-geist-sans":'"Segoe UI", Helvetica, Arial, sans-serif',"--font-geist-mono":'"Cascadia Code", "Courier New", monospace'},children:(0,b.jsx)("body",{className:"min-h-full flex flex-col",children:a})})},"metadata",0,{title:"Chay Fashion",description:"Modern styles for everyday wear. Quality fashion made accessible for everyone."}])},70864,a=>{a.n(a.i(33290))}];
+
+//# sourceMappingURL=app_layout_tsx_13yf0ls._.js.map
