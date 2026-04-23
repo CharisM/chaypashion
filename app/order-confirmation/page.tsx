@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { FiCheckCircle, FiFacebook, FiShoppingBag, FiMapPin } from "react-icons/fi";
 import { getCart, CartItem } from "@/lib/cart";
-import { saveOrder, clearCart } from "@/lib/orders";
+import { saveOrder, clearCart, PaymentStatus } from "@/lib/orders";
 import { deductStock } from "@/lib/stock";
 import { supabase } from "@/lib/supabase";
 import { motion } from "framer-motion";
@@ -33,6 +33,7 @@ export default function OrderConfirmationPage() {
       const gcashProofUrl = localStorage.getItem("chay_gcash_proof_url") ?? undefined;
       const num = "CF-" + Math.random().toString(36).substring(2, 8).toUpperCase();
       const subtotalAmt = cartItems.reduce((sum, item) => sum + item.price * (item.qty ?? 1), 0);
+      const paymentStatus: PaymentStatus = payment === "gcash" ? "unpaid" : "paid";
       const order = {
         orderNumber: num,
         items: cartItems,
@@ -43,7 +44,7 @@ export default function OrderConfirmationPage() {
         expectedDelivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" }),
         delivered: false,
         status: "pending" as const,
-        paymentStatus: (payment === "gcash" ? "unpaid" : "paid") as const,
+        paymentStatus,
         paymentMethod: payment,
         customerName: parsedAddress?.fullName,
         customerPhone: parsedAddress?.phone,
@@ -110,7 +111,7 @@ export default function OrderConfirmationPage() {
           </div>
         ) : (
         <>
-        {/* SUCCESS HEADER */}}
+        {/* SUCCESS HEADER */}
         <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }} className="text-center mb-12">
           <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
             <FiCheckCircle className="text-green-500 text-4xl" />

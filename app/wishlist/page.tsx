@@ -165,6 +165,7 @@ export default function WishlistPage() {
             </Link>
           </motion.div>
         ) : (
+          <>
           <div className="grid grid-cols-3 gap-6">
             <AnimatePresence>
               {visibleWishlist.map((item, i) => (
@@ -211,6 +212,7 @@ export default function WishlistPage() {
               </button>
             </div>
           )}
+          </>
         )}
         </>
         )}

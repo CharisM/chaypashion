@@ -143,6 +143,7 @@ export default function OrdersPage() {
             </Link>
           </motion.div>
         ) : (
+          <>
           <div className="space-y-5">
             {visibleOrders.map((order, i) => (
               <motion.div
@@ -394,6 +395,7 @@ export default function OrdersPage() {
               </button>
             </div>
           )}
+          </>
         )}
       </div>
 
