@@ -168,14 +168,18 @@ export default function SalePage() {
           })}
         </div>
         )}
-        {visibleCount < saleItems.length && (
-          <div className="flex justify-center mt-10">
+        {saleItems.length > 8 && (
+          <div className="flex flex-col items-center gap-3 mt-10">
             <button
               onClick={() => setVisibleCount(v => v + 8)}
-              className="px-10 py-3 border-2 border-black text-sm font-semibold tracking-widest uppercase hover:bg-black hover:text-white transition"
+              disabled={visibleCount >= saleItems.length}
+              className="px-10 py-3 border-2 border-black text-sm font-semibold tracking-widest uppercase hover:bg-black hover:text-white transition disabled:opacity-30 disabled:cursor-not-allowed"
             >
-              Load More ({saleItems.length - visibleCount} remaining)
+              {visibleCount >= saleItems.length ? "All items loaded" : `Load More (${saleItems.length - visibleCount} remaining)`}
             </button>
+            <p className="text-xs text-gray-400">
+              Showing {Math.min(visibleCount, saleItems.length)} of {saleItems.length} items
+            </p>
           </div>
         )}
       </div>

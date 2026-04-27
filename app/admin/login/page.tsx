@@ -4,12 +4,12 @@ export const dynamic = "force-dynamic";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { FiMail, FiLock, FiEye, FiEyeOff, FiArrowRight } from "react-icons/fi";
+import { FiMail, FiLock, FiEye, FiEyeOff, FiShield, FiArrowRight } from "react-icons/fi";
 import { supabase } from "@/lib/supabase";
+import { ADMIN_EMAIL } from "@/lib/orders";
 import { motion } from "framer-motion";
 
-export default function Login() {
+export default function AdminLogin() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,12 +20,12 @@ export default function Login() {
   const handleLogin = async () => {
     setError("");
     if (!email || !password) { setError("Please fill in all fields."); return; }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setError("Please enter a valid email address."); return; }
+    if (email !== ADMIN_EMAIL) { setError("Access denied. Invalid admin credentials."); return; }
     setLoading(true);
     const { error: loginError } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
-    if (loginError) { setError(loginError.message); return; }
-    setTimeout(() => router.replace("/"), 100);
+    if (loginError) { setError("Invalid credentials. Please try again."); return; }
+    router.replace("/admin");
   };
 
   return (
@@ -33,35 +33,33 @@ export default function Login() {
 
       {/* LEFT PANEL */}
       <div className="hidden lg:flex w-1/2 relative flex-col justify-between p-12 overflow-hidden">
-        <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('/BG.jpg')" }} />
-        <div className="absolute inset-0 bg-black/40" />
+        <div className="absolute inset-0 bg-cover bg-center opacity-20" style={{ backgroundImage: "url('/BG.jpg')" }} />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#0a0a0a] via-[#0a0a0a]/80 to-transparent" />
+
+        {/* Decorative grid */}
+        <div className="absolute inset-0 opacity-5"
+          style={{ backgroundImage: "linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)", backgroundSize: "60px 60px" }}
+        />
 
         <div className="relative z-10">
-          <div className="flex items-center gap-2">
-            <svg viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-7 h-7 text-white">
-              <rect x="20" y="20" width="120" height="120" rx="4" transform="rotate(45 80 80)" stroke="currentColor" strokeWidth="3" fill="none"/>
-              <rect x="32" y="32" width="96" height="96" rx="2" transform="rotate(45 80 80)" stroke="currentColor" strokeWidth="1.2" fill="none" opacity="0.4"/>
-              <path d="M58 68 C58 58 68 52 78 52 C86 52 92 56 95 62" stroke="currentColor" strokeWidth="4" strokeLinecap="round" fill="none"/>
-              <path d="M58 92 C58 102 68 108 78 108 C86 108 92 104 95 98" stroke="currentColor" strokeWidth="4" strokeLinecap="round" fill="none"/>
-              <line x1="58" y1="68" x2="58" y2="92" stroke="currentColor" strokeWidth="4" strokeLinecap="round"/>
-              <line x1="102" y1="52" x2="102" y2="108" stroke="currentColor" strokeWidth="4" strokeLinecap="round"/>
-              <line x1="102" y1="52" x2="122" y2="52" stroke="currentColor" strokeWidth="4" strokeLinecap="round"/>
-              <line x1="102" y1="80" x2="118" y2="80" stroke="currentColor" strokeWidth="4" strokeLinecap="round"/>
-            </svg>
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-[#c9a98a] rounded-lg flex items-center justify-center">
+              <FiShield className="text-black text-sm font-bold" />
+            </div>
             <span className="text-white font-serif italic text-xl">Chay Fashion</span>
           </div>
         </div>
 
         <div className="relative z-10">
           <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
-            <span className="text-[#c9a98a] text-xs tracking-[0.4em] uppercase font-medium">Welcome Back</span>
+            <span className="text-[#c9a98a] text-xs tracking-[0.4em] uppercase font-medium">Admin Portal</span>
             <h1 className="text-5xl font-bold text-white mt-3 leading-tight">
-              Discover Your<br />
-              <span className="text-[#c9a98a]">Perfect</span><br />
-              Style.
+              Manage Your<br />
+              <span className="text-[#c9a98a]">Business</span><br />
+              With Ease.
             </h1>
             <p className="text-white/40 text-sm mt-6 leading-relaxed max-w-sm">
-              Shop the latest fashion trends, track your orders, and enjoy a seamless shopping experience.
+              Full control over orders, inventory, analytics, and customer management — all in one place.
             </p>
           </motion.div>
 
@@ -72,9 +70,9 @@ export default function Login() {
             className="flex gap-8 mt-12"
           >
             {[
-              { label: "New Arrivals", desc: "Fresh styles" },
-              { label: "Easy Returns", desc: "Hassle-free" },
-              { label: "Fast Delivery", desc: "Quick shipping" },
+              { label: "Orders", desc: "Track & manage" },
+              { label: "Inventory", desc: "Stock control" },
+              { label: "Analytics", desc: "Sales insights" },
             ].map((f, i) => (
               <div key={i}>
                 <p className="text-white font-semibold text-sm">{f.label}</p>
@@ -99,22 +97,15 @@ export default function Login() {
         >
           {/* MOBILE LOGO */}
           <div className="flex lg:hidden items-center gap-2 mb-10">
-            <svg viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-7 h-7 text-white">
-              <rect x="20" y="20" width="120" height="120" rx="4" transform="rotate(45 80 80)" stroke="currentColor" strokeWidth="3" fill="none"/>
-              <rect x="32" y="32" width="96" height="96" rx="2" transform="rotate(45 80 80)" stroke="currentColor" strokeWidth="1.2" fill="none" opacity="0.4"/>
-              <path d="M58 68 C58 58 68 52 78 52 C86 52 92 56 95 62" stroke="currentColor" strokeWidth="4" strokeLinecap="round" fill="none"/>
-              <path d="M58 92 C58 102 68 108 78 108 C86 108 92 104 95 98" stroke="currentColor" strokeWidth="4" strokeLinecap="round" fill="none"/>
-              <line x1="58" y1="68" x2="58" y2="92" stroke="currentColor" strokeWidth="4" strokeLinecap="round"/>
-              <line x1="102" y1="52" x2="102" y2="108" stroke="currentColor" strokeWidth="4" strokeLinecap="round"/>
-              <line x1="102" y1="52" x2="122" y2="52" stroke="currentColor" strokeWidth="4" strokeLinecap="round"/>
-              <line x1="102" y1="80" x2="118" y2="80" stroke="currentColor" strokeWidth="4" strokeLinecap="round"/>
-            </svg>
+            <div className="w-7 h-7 bg-[#c9a98a] rounded-lg flex items-center justify-center">
+              <FiShield className="text-black text-xs" />
+            </div>
             <span className="text-white font-serif italic text-lg">Chay Fashion</span>
           </div>
 
           <div className="mb-10">
             <h2 className="text-3xl font-bold text-white">Welcome back</h2>
-            <p className="text-white/40 text-sm mt-2">Sign in to your account</p>
+            <p className="text-white/40 text-sm mt-2">Sign in to your admin dashboard</p>
           </div>
 
           {/* EMAIL */}
@@ -124,7 +115,7 @@ export default function Login() {
               <FiMail className="text-white/30 mr-3 shrink-0" />
               <input
                 type="email"
-                placeholder="you@example.com"
+                placeholder="admin@chayfashion.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleLogin()}
@@ -134,7 +125,7 @@ export default function Login() {
           </div>
 
           {/* PASSWORD */}
-          <div className="mb-2">
+          <div className="mb-6">
             <label className="text-xs text-white/40 uppercase tracking-widest font-medium mb-2 block">Password</label>
             <div className="flex items-center bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 focus-within:border-[#c9a98a]/50 transition">
               <FiLock className="text-white/30 mr-3 shrink-0" />
@@ -150,10 +141,6 @@ export default function Login() {
                 {showPassword ? <FiEyeOff /> : <FiEye />}
               </button>
             </div>
-          </div>
-
-          <div className="flex justify-end mb-6">
-            <Link href="/forgot-password" className="text-xs text-white/30 hover:text-[#c9a98a] transition">Forgot password?</Link>
           </div>
 
           {error && (
@@ -181,11 +168,11 @@ export default function Login() {
             )}
           </button>
 
-          <div className="mt-8 pt-8 border-t border-white/5 text-center">
-            <p className="text-white/30 text-sm">
-              Don&apos;t have an account?{" "}
-              <Link href="/signup" className="text-[#c9a98a] hover:text-[#b8956f] transition font-semibold">Sign up</Link>
-            </p>
+          <div className="mt-8 pt-8 border-t border-white/5">
+            <div className="flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+              <p className="text-white/20 text-xs">Secured & encrypted connection</p>
+            </div>
           </div>
         </motion.div>
       </div>

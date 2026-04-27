@@ -34,6 +34,7 @@ export default function Profile() {
     const getProfile = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setTimeout(() => router.push("/login"), 0); return; }
+      if (user.email === "chayfashion.admin@gmail.com") { router.replace("/admin"); return; }
       const { data } = await supabase.from("profiles").select("username, phone, email").eq("id", user.id).maybeSingle();
       setProfile(data);
       setLoading(false);

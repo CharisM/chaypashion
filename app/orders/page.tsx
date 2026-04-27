@@ -57,9 +57,12 @@ export default function OrdersPage() {
   };
 
   useEffect(() => {
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setTimeout(() => router.push("/login"), 0); return; }
+      if (user.email === "chayfashion.admin@gmail.com") { router.replace("/admin"); return; }
       setUserId(user.id);
       const { data: profile } = await supabase.from("profiles").select("username").eq("id", user.id).maybeSingle();
       setUsername(profile?.username ?? user.email ?? null);
@@ -68,9 +71,11 @@ export default function OrdersPage() {
       setLoading(false);
 
       // real-time order status updates
-        const channel = supabase
-          .channel("orders-realtime")
-          .on("postgres_changes", { event: "UPDATE", schema: "public", table: "orders", filter: `user_id=eq.${user.id}` },
+      channel = supabase
+        .channel("orders-realtime")
+        .on(
+          "postgres_changes",
+          { event: "UPDATE", schema: "public", table: "orders", filter: `user_id=eq.${user.id}` },
           (payload: { new: { order_number: string; status: Order["status"]; delivered: boolean; payment_status: Order["paymentStatus"] } }) => {
             const updated = payload.new;
             setOrders(prev => prev.map(o =>
@@ -89,10 +94,11 @@ export default function OrdersPage() {
           }
         )
         .subscribe();
-
-      return () => { supabase.removeChannel(channel); };
     };
+
     load();
+
+    return () => { if (channel) supabase.removeChannel(channel); };
   }, []);
 
   return (

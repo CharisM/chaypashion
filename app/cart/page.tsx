@@ -44,6 +44,7 @@ export default function CartPage() {
     const check = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setTimeout(() => router.push("/login"), 0); return; }
+      if (user.email === "chayfashion.admin@gmail.com") { router.replace("/admin"); return; }
       setUserId(user.id);
       const cartItems = getCart(user.id);
       setCart(cartItems);
@@ -103,17 +104,17 @@ export default function CartPage() {
     <div className="min-h-screen bg-white">
 
       {/* NAVBAR */}
-      <nav className="flex justify-between items-center px-12 py-4 bg-white border-b border-gray-100">
-        <Link href="/" className="text-3xl font-serif italic">Chay Fashion</Link>
-        <ul className="flex gap-8 text-sm font-medium items-center">
-          <li>
+      <nav className="flex justify-between items-center px-4 md:px-12 py-4 bg-white border-b border-gray-100">
+        <Link href="/" className="text-2xl md:text-3xl font-serif italic">Chay Fashion</Link>
+        <ul className="flex gap-4 md:gap-8 text-sm font-medium items-center">
+          <li className="hidden md:block">
             <form onSubmit={handleSearch} className="flex items-center border border-gray-200 rounded-full px-3 py-1.5 gap-2 hover:border-gray-400 transition">
               <FiSearch className="text-gray-400 text-sm shrink-0" />
               <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search products..." className="text-xs outline-none bg-transparent w-36 placeholder-gray-400" />
             </form>
           </li>
-          <li><Link href="/" className="hover:text-gray-500 transition">HOME</Link></li>
-          <li><Link href="/about" className="hover:text-gray-500 transition">ABOUT</Link></li>
+          <li className="hidden md:block"><Link href="/" className="hover:text-gray-500 transition">HOME</Link></li>
+          <li className="hidden md:block"><Link href="/about" className="hover:text-gray-500 transition">ABOUT</Link></li>
           <li>
             <Link href="/cart" className="relative flex items-center">
               <FiShoppingCart className="text-xl" />
@@ -129,7 +130,7 @@ export default function CartPage() {
               <div className="w-9 h-9 rounded-full bg-black flex items-center justify-center">
                 <FiUser className="text-white text-lg" />
               </div>
-              {username && <span className="text-sm font-medium">{username}</span>}
+              {username && <span className="hidden md:inline text-sm font-medium">{username}</span>}
             </button>
             {dropdown && (
               <div className="absolute right-0 mt-2 w-44 bg-white border rounded-xl shadow-lg z-[999] overflow-hidden">
@@ -172,10 +173,10 @@ export default function CartPage() {
       ) : (
 
         /* SPLIT LAYOUT */
-        <div className="flex min-h-[calc(100vh-73px)]">
+        <div className="flex flex-col md:flex-row min-h-[calc(100vh-73px)]">
 
           {/* LEFT — ITEMS */}
-          <div className="flex-1 px-12 py-10 overflow-y-auto border-r border-gray-100">
+          <div className="flex-1 px-4 md:px-12 py-6 md:py-10 overflow-y-auto border-b md:border-b-0 md:border-r border-gray-100">
 
             <div className="flex items-center justify-between mb-8">
               <div>
@@ -188,7 +189,7 @@ export default function CartPage() {
             </div>
 
             {/* COLUMN HEADERS */}
-            <div className="grid grid-cols-5 text-[10px] tracking-widest uppercase text-gray-400 pb-3 border-b border-gray-100 mb-4 px-2">
+            <div className="hidden sm:grid grid-cols-5 text-[10px] tracking-widest uppercase text-gray-400 pb-3 border-b border-gray-100 mb-4 px-2">
               <div className="flex items-center">
                 <input type="checkbox" checked={selected.length === cart.length && cart.length > 0} onChange={toggleSelectAll} className="w-4 h-4 accent-black cursor-pointer" />
                 <span className="ml-2">All</span>
@@ -197,22 +198,62 @@ export default function CartPage() {
               <span className="text-center">Size / Qty</span>
               <span className="text-right">Price</span>
             </div>
+            {/* MOBILE SELECT ALL */}
+            <div className="flex sm:hidden items-center gap-2 pb-3 border-b border-gray-100 mb-4 px-2">
+              <input type="checkbox" checked={selected.length === cart.length && cart.length > 0} onChange={toggleSelectAll} className="w-4 h-4 accent-black cursor-pointer" />
+              <span className="text-[10px] tracking-widest uppercase text-gray-400">Select All</span>
+            </div>
 
             {/* CART ITEMS */}
             {cart.map((item, index) => {
               const isEditing = editingIndex === index;
               const sizes = getSizes(item.id);
               return (
+                <div key={index}>
+                {/* MOBILE LAYOUT */}
+                <div className="group sm:hidden flex gap-3 py-4 border-b border-gray-50 px-2">
+                  <input type="checkbox" checked={selected.includes(index)} onChange={() => toggleSelect(index)} className="w-4 h-4 accent-black cursor-pointer mt-1 shrink-0" />
+                  <div className="relative w-20 h-20 shrink-0 overflow-hidden rounded-xl bg-gray-100">
+                    <img src={item.img} alt={item.name} className="w-full h-full object-cover" />
+                    <button onClick={() => handleRemove(index)} className="absolute top-1 right-1 w-5 h-5 bg-white rounded-full shadow flex items-center justify-center hover:bg-red-50">
+                      <FiX className="text-red-400 text-xs" />
+                    </button>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-[10px] tracking-widest text-gray-400 uppercase">{item.category}</span>
+                    <p className="text-sm font-semibold text-gray-800 truncate mt-0.5">{item.name}</p>
+                    <p className="text-sm font-bold text-gray-800 mt-1">₱{(item.price * (item.qty ?? 1)).toLocaleString()}</p>
+                    {isEditing ? (
+                      <div className="flex flex-col gap-2 mt-2">
+                        {sizes.length > 1 && (
+                          <div className="flex gap-1 flex-wrap">
+                            {sizes.map((s) => (
+                              <button key={s} onClick={() => setEditSize(s)} className={`px-2 py-1 text-[10px] font-bold border transition rounded ${editSize === s ? "bg-black text-white border-black" : "border-gray-200 hover:border-black"}`}>{s}</button>
+                            ))}
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => setEditQty(q => Math.max(1, q - 1))} className="w-6 h-6 border border-gray-200 rounded text-sm font-bold hover:border-black transition">-</button>
+                          <span className="text-sm font-bold w-4 text-center">{editQty}</span>
+                          <button onClick={() => setEditQty(q => q + 1)} className="w-6 h-6 border border-gray-200 rounded text-sm font-bold hover:border-black transition">+</button>
+                          <button onClick={() => handleSave(index)} className="flex items-center gap-1 text-[10px] text-green-600 font-semibold hover:text-green-700 transition ml-2"><FiCheck /> Save</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button onClick={() => handleEdit(index)} className="inline-flex items-center gap-1 border border-gray-200 rounded-full px-3 py-1 text-xs font-medium hover:border-black transition mt-2">
+                        {item.size}{(item.qty ?? 1) > 1 ? ` x${item.qty}` : ""} <FiEdit2 className="text-[10px] text-gray-400" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* DESKTOP LAYOUT */}
                 <div
-                  key={index}
-                  className="group grid grid-cols-5 items-center gap-4 py-5 border-b border-gray-50 hover:bg-gray-50/50 transition rounded-xl px-2"
+                  className="group hidden sm:grid grid-cols-5 items-center gap-4 py-5 border-b border-gray-50 hover:bg-gray-50/50 transition rounded-xl px-2"
                 >
-                  {/* CHECKBOX */}
                   <div className="flex items-center">
                     <input type="checkbox" checked={selected.includes(index)} onChange={() => toggleSelect(index)} className="w-4 h-4 accent-black cursor-pointer" />
                   </div>
-
-                  {/* PRODUCT */}
                   <div className="col-span-2 flex items-center gap-4">
                     <div className="relative w-20 h-20 shrink-0 overflow-hidden rounded-xl bg-gray-100">
                       <img src={item.img} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
@@ -225,8 +266,6 @@ export default function CartPage() {
                       <p className="text-sm font-semibold text-gray-800 truncate mt-0.5">{item.name}</p>
                     </div>
                   </div>
-
-                  {/* SIZE + QTY */}
                   <div className="text-center">
                     {isEditing ? (
                       <div className="flex flex-col items-center gap-3">
@@ -235,9 +274,7 @@ export default function CartPage() {
                             <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-1">Size</p>
                             <div className="flex gap-1 flex-wrap justify-center">
                               {sizes.map((s) => (
-                                <button key={s} onClick={() => setEditSize(s)} className={`px-2 py-1 text-[10px] font-bold border transition rounded ${editSize === s ? "bg-black text-white border-black" : "border-gray-200 hover:border-black"}`}>
-                                  {s}
-                                </button>
+                                <button key={s} onClick={() => setEditSize(s)} className={`px-2 py-1 text-[10px] font-bold border transition rounded ${editSize === s ? "bg-black text-white border-black" : "border-gray-200 hover:border-black"}`}>{s}</button>
                               ))}
                             </div>
                           </div>
@@ -250,9 +287,7 @@ export default function CartPage() {
                             <button onClick={() => setEditQty(q => q + 1)} className="w-6 h-6 border border-gray-200 rounded text-sm font-bold hover:border-black transition">+</button>
                           </div>
                         </div>
-                        <button onClick={() => handleSave(index)} className="flex items-center gap-1 text-[10px] text-green-600 font-semibold hover:text-green-700 transition">
-                          <FiCheck /> Save
-                        </button>
+                        <button onClick={() => handleSave(index)} className="flex items-center gap-1 text-[10px] text-green-600 font-semibold hover:text-green-700 transition"><FiCheck /> Save</button>
                       </div>
                     ) : (
                       <button onClick={() => handleEdit(index)} className="inline-flex items-center gap-1 border border-gray-200 rounded-full px-3 py-1 text-xs font-medium hover:border-black transition">
@@ -260,19 +295,18 @@ export default function CartPage() {
                       </button>
                     )}
                   </div>
-
-                  {/* PRICE */}
                   <div className="text-right">
                     <p className="text-sm font-bold text-gray-800">₱{(item.price * (item.qty ?? 1)).toLocaleString()}</p>
                     {(item.qty ?? 1) > 1 && <p className="text-[10px] text-gray-400">₱{item.price.toLocaleString()} each</p>}
                   </div>
+                </div>
                 </div>
               );
             })}
           </div>
 
           {/* RIGHT — ORDER SUMMARY */}
-          <div className="w-96 shrink-0 bg-[#faf9f7] px-10 py-10 flex flex-col overflow-y-auto">
+          <div className="w-full md:w-96 shrink-0 bg-[#faf9f7] px-4 md:px-10 py-6 md:py-10 flex flex-col overflow-y-auto">
 
             <h2 className="text-lg font-bold mb-8">Order Summary</h2>
 

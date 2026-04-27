@@ -81,42 +81,68 @@ export default function Home() {
       <Navbar />
 
       {/* HERO */}
-    <div className="h-[70vh] relative overflow-hidden">
-      <div
-        className="absolute inset-0 bg-cover bg-center animate-kenburns"
-        style={{ backgroundImage: "url('/BG.jpg')" }}
-      />
-      <div className="absolute inset-0 bg-black/10"></div>
-      <div className="relative flex items-center h-full px-16">
-        <div className="text-white max-w-xl">
+      <div className="h-screen relative overflow-hidden">
+        <div
+          className="absolute inset-0 bg-cover bg-center animate-kenburns"
+          style={{ backgroundImage: "url('/BG.jpg')" }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/65 via-black/35 to-transparent" />
+        <div className="relative flex flex-col justify-center h-full px-10 md:px-24">
           <motion.h1
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7 }}
-            className="text-5xl font-bold leading-tight drop-shadow-lg"
+            transition={{ duration: 0.7, delay: 0.15 }}
+            className="text-white text-5xl md:text-7xl font-extrabold leading-[1.05] tracking-tight max-w-2xl"
           >
-            STYLIST PICKS BEAT
+            STYLIST PICKS
             <br />
-            THE HEAT
+            <span className="text-[#c9a98a] italic font-bold">BEAT THE HEAT.</span>
           </motion.h1>
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.3 }}>
-            {loaded && !username ? (
-              <Link href="/login">
-                <button className="mt-8 border-2 border-white px-6 py-2 hover:bg-white hover:text-black transition">
-                  SHOP NOW
-                </button>
-              </Link>
-            ) : (
-              <Link href="/shop">
-                <button className="mt-8 border-2 border-white px-6 py-2 hover:bg-white hover:text-black transition">
-                  SHOP NOW
-                </button>
-              </Link>
-            )}
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.35 }}
+            className="text-gray-300 text-sm md:text-base mt-5 max-w-sm leading-relaxed tracking-wide"
+          >
+            Curated fashion, premium watches &amp; luxury skincare — all in one place.
+          </motion.p>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.5 }}
+            className="mt-8"
+          >
+            <Link href={loaded && !username ? "/login" : "/shop"}>
+              <button className="bg-[#c9a98a] text-white px-10 py-3 text-xs font-bold tracking-[0.3em] uppercase hover:bg-[#b8956f] transition shadow-lg">
+                SHOP NOW
+              </button>
+            </Link>
           </motion.div>
         </div>
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2">
+          <span className="text-white/40 text-[10px] tracking-[0.4em] uppercase">Scroll</span>
+          <div className="w-px h-10 bg-white/25 animate-pulse" />
+        </div>
       </div>
-    </div>
+
+      {/* CATEGORY STRIP */}
+      <div className="bg-black text-white py-5 px-10">
+        <div className="max-w-6xl mx-auto flex flex-wrap justify-center gap-12">
+          {[
+            { label: "Dresses", cat: "Dress" },
+            { label: "Watches", cat: "Watch" },
+            { label: "Body Essentials", cat: "Herborist Scrub" },
+          ].map(({ label, cat }) => (
+            <button
+              key={cat}
+              onClick={() => { setFilter(cat); document.getElementById("new-arrivals")?.scrollIntoView({ behavior: "smooth" }); }}
+              className="text-xs tracking-[0.4em] uppercase font-medium text-gray-400 hover:text-[#c9a98a] transition border-b border-transparent hover:border-[#c9a98a] pb-1"
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
       {/* PRODUCTS */}
       <div id="new-arrivals" className="bg-[#faf9f7] py-24 px-10">
 
@@ -251,75 +277,127 @@ export default function Home() {
       </div>
 
       {/* WHY CHOOSE US */}
-      <div className="bg-white py-20 px-10">
-        <div className="max-w-6xl mx-auto grid grid-cols-2 gap-16 items-center">
-          <motion.div
-            initial={{ opacity: 0, x: -50 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-          >
-            <span className="text-xs tracking-[0.3em] text-gray-400 uppercase">Our Promise</span>
-            <h2 className="text-3xl font-bold mt-2 mb-6">Quality You Can Trust</h2>
-            <p className="text-gray-600 leading-relaxed mb-4">
-              At Chay Fashion, we curate only the finest pieces — from elegant dresses to authentic Fossil watches and premium Herborist skincare. Every product is handpicked to ensure quality, style, and value.
-            </p>
-            <p className="text-gray-600 leading-relaxed mb-6">
-              Whether you're dressing up for a special occasion or treating yourself to luxury accessories, we're here to make fashion accessible and enjoyable for everyone.
-            </p>
-            <Link href="/about">
-              <button className="bg-black text-white px-8 py-3 text-sm tracking-widest uppercase hover:bg-gray-800 transition">
-                Learn More
-              </button>
-            </Link>
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0, x: 50 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="grid grid-cols-2 gap-4"
-          >
-            <img src="/D1.jpg" alt="Fashion" className="w-full h-48 object-cover rounded-lg" />
-            <img src="/WD1.jpg" alt="Watch" className="w-full h-48 object-cover rounded-lg" />
-            <img src="/SCRUB1.jpg" alt="Scrub" className="w-full h-48 object-cover rounded-lg" />
-            <img src="/D3.jpg" alt="Dress" className="w-full h-48 object-cover rounded-lg" />
-          </motion.div>
-        </div>
-      </div>
-
-      {/* TESTIMONIALS */}
-      {testimonials.length > 0 && (
-      <div className="bg-gray-50 py-20 px-10">
+      <div className="bg-white py-24 px-10">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <span className="text-xs tracking-[0.3em] text-gray-400 uppercase">Customer Love</span>
-            <h2 className="text-3xl font-bold mt-2">What Our Customers Say</h2>
+            <span className="text-xs tracking-[0.4em] text-[#c9a98a] uppercase font-medium">Our Promise</span>
+            <h2 className="text-4xl font-bold mt-2">Why Choose Chay Fashion</h2>
           </div>
-          <div className="grid grid-cols-3 gap-8">
-            {testimonials.map((t, i) => (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20">
+            {[
+              { icon: "✦", title: "Handpicked Quality", desc: "Every item is carefully curated for style, comfort, and lasting value." },
+              { icon: "◈", title: "Authentic Products", desc: "Genuine Fossil watches, premium Herborist skincare, and elegant dresses." },
+              { icon: "⟡", title: "Fast & Secure", desc: "Safe checkout, reliable delivery, and dedicated customer support." },
+            ].map((f, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: i * 0.1 }}
-                className="bg-white p-6 rounded-xl shadow-sm"
+                className="text-center p-8 border border-gray-100 hover:border-[#c9a98a] hover:shadow-md transition group"
               >
-                <div className="flex gap-1 mb-4">
-                  {[...Array(5)].map((_, s) => (
-                    <span key={s} className={s < t.rating ? "text-yellow-400" : "text-gray-200"}>★</span>
-                  ))}
-                </div>
-                <p className="text-sm text-gray-600 mb-4 italic">"{t.comment}"</p>
-                <p className="text-xs font-semibold">— {t.username}</p>
-                {t.productName && <p className="text-[10px] text-gray-400 mt-0.5">on {t.productName}</p>}
+                <span className="text-3xl text-[#c9a98a] inline-block group-hover:scale-110 transition">{f.icon}</span>
+                <h3 className="text-lg font-bold mt-4 mb-2">{f.title}</h3>
+                <p className="text-sm text-gray-500 leading-relaxed">{f.desc}</p>
               </motion.div>
             ))}
           </div>
+          <div className="grid grid-cols-2 gap-12 items-center">
+            <motion.div
+              initial={{ opacity: 0, x: -50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="grid grid-cols-2 gap-3"
+            >
+              <img src="/D1.jpg" alt="Fashion" className="w-full h-52 object-cover" />
+              <img src="/WD1.jpg" alt="Watch" className="w-full h-52 object-cover mt-6" />
+              <img src="/SCRUB1.jpg" alt="Scrub" className="w-full h-52 object-cover -mt-6" />
+              <img src="/D3.jpg" alt="Dress" className="w-full h-52 object-cover" />
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, x: 50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+            >
+              <span className="text-xs tracking-[0.3em] text-gray-400 uppercase">About Us</span>
+              <h2 className="text-3xl font-bold mt-2 mb-6">Fashion That Tells Your Story</h2>
+              <p className="text-gray-600 leading-relaxed mb-4">
+                At Chay Fashion, we believe style is personal. From elegant dresses to authentic Fossil watches and premium Herborist skincare — every piece is handpicked to elevate your everyday.
+              </p>
+              <p className="text-gray-500 leading-relaxed mb-8 text-sm">
+                Whether dressing up for a special occasion or treating yourself to luxury accessories, we make fashion accessible and enjoyable for everyone.
+              </p>
+              <Link href="/about">
+                <button className="bg-black text-white px-8 py-3 text-sm tracking-widest uppercase hover:bg-[#c9a98a] transition">
+                  Learn More
+                </button>
+              </Link>
+            </motion.div>
+          </div>
         </div>
       </div>
+
+      {/* TESTIMONIALS */}
+      {testimonials.length > 0 && (
+        <div className="bg-[#faf9f7] py-24 px-10">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-16">
+              <span className="text-xs tracking-[0.4em] text-[#c9a98a] uppercase font-medium">Customer Love</span>
+              <h2 className="text-4xl font-bold mt-2">What Our Customers Say</h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {testimonials.map((t, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: i * 0.1 }}
+                  className="bg-white p-8 border-t-2 border-[#c9a98a] shadow-sm hover:shadow-md transition"
+                >
+                  <div className="flex gap-1 mb-5">
+                    {[...Array(5)].map((_, s) => (
+                      <span key={s} className={s < t.rating ? "text-[#c9a98a]" : "text-gray-200"}>★</span>
+                    ))}
+                  </div>
+                  <p className="text-sm text-gray-600 mb-6 italic leading-relaxed">&ldquo;{t.comment}&rdquo;</p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center text-white text-xs font-bold">
+                      {t.username[0].toUpperCase()}
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold">{t.username}</p>
+                      {t.productName && <p className="text-[10px] text-gray-400">on {t.productName}</p>}
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </div>
       )}
+
+      {/* CTA BANNER */}
+      <div className="bg-black text-white py-20 px-10 text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+        >
+          <span className="text-xs tracking-[0.5em] text-[#c9a98a] uppercase font-medium">Limited Time</span>
+          <h2 className="text-4xl md:text-5xl font-bold mt-3 mb-4">Elevate Your Style Today</h2>
+          <p className="text-gray-400 text-sm mb-8 max-w-md mx-auto">Explore our full collection and find pieces that speak to you.</p>
+          <Link href={loaded && !username ? "/login" : "/shop"}>
+            <button className="bg-[#c9a98a] text-white px-12 py-4 text-xs font-bold tracking-[0.3em] uppercase hover:bg-[#b8956f] transition">
+              BROWSE COLLECTION
+            </button>
+          </Link>
+        </motion.div>
+      </div>
 
       {/* FOOTER */}
       <footer className="bg-black text-gray-400 pt-16 pb-8 px-16">
@@ -327,7 +405,19 @@ export default function Home() {
 
           {/* BRAND */}
           <div className="col-span-1">
-            <h2 className="text-white text-2xl font-serif italic mb-4">Chay Fashion</h2>
+            <div className="flex items-center gap-2 mb-4">
+              <svg viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-7 h-7 text-white">
+                <rect x="20" y="20" width="120" height="120" rx="4" transform="rotate(45 80 80)" stroke="currentColor" strokeWidth="3" fill="none"/>
+                <rect x="32" y="32" width="96" height="96" rx="2" transform="rotate(45 80 80)" stroke="currentColor" strokeWidth="1.2" fill="none" opacity="0.4"/>
+                <path d="M58 68 C58 58 68 52 78 52 C86 52 92 56 95 62" stroke="currentColor" strokeWidth="4" strokeLinecap="round" fill="none"/>
+                <path d="M58 92 C58 102 68 108 78 108 C86 108 92 104 95 98" stroke="currentColor" strokeWidth="4" strokeLinecap="round" fill="none"/>
+                <line x1="58" y1="68" x2="58" y2="92" stroke="currentColor" strokeWidth="4" strokeLinecap="round"/>
+                <line x1="102" y1="52" x2="102" y2="108" stroke="currentColor" strokeWidth="4" strokeLinecap="round"/>
+                <line x1="102" y1="52" x2="122" y2="52" stroke="currentColor" strokeWidth="4" strokeLinecap="round"/>
+                <line x1="102" y1="80" x2="118" y2="80" stroke="currentColor" strokeWidth="4" strokeLinecap="round"/>
+              </svg>
+              <h2 className="text-white text-2xl font-serif italic">Chay Fashion</h2>
+            </div>
             <p className="text-sm leading-relaxed text-gray-500">
               Modern styles for everyday wear. Quality fashion made accessible for everyone.
             </p>

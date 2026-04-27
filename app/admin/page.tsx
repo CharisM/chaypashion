@@ -55,7 +55,7 @@ export default function AdminPage() {
   useEffect(() => {
     const check = async () => {
       const admin = await isAdmin();
-      if (!admin) { router.push("/"); return; }
+      if (!admin) { router.push("/admin/login"); return; }
       setAuthorized(true);
       const data = await getAllOrders();
       setOrders(data);
@@ -161,8 +161,16 @@ export default function AdminPage() {
       {/* NAVBAR */}
       <nav className="flex justify-between items-center px-12 py-4 bg-white border-b border-gray-100">
         <Link href="/" className="text-3xl font-serif italic">Chay Fashion</Link>
-        <div className="flex items-center gap-2 text-xs font-semibold text-gray-500 bg-gray-100 px-4 py-2 rounded-full">
-          <FiShield className="text-black" /> Admin Panel
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 text-xs font-semibold text-gray-500 bg-gray-100 px-4 py-2 rounded-full">
+            <FiShield className="text-black" /> Admin Panel
+          </div>
+          <button
+            onClick={async () => { await supabase.auth.signOut(); router.push("/admin/login"); }}
+            className="text-xs text-red-500 hover:text-red-700 border border-red-200 hover:border-red-400 px-4 py-2 rounded-full transition font-semibold"
+          >
+            Logout
+          </button>
         </div>
       </nav>
 
@@ -585,6 +593,19 @@ export default function AdminPage() {
                               onClick={async () => {
                                 await updateRefundStatus(r.id, "approved");
                                 setRefunds(prev => prev.map(x => x.id === r.id ? { ...x, status: "approved" } : x));
+                                const order = orders.find(o => o.orderNumber === r.orderNumber);
+                                if (order?.userId) {
+                                  const { data: profile } = await supabase.from("profiles").select("email").eq("id", order.userId).maybeSingle();
+                                  if (profile?.email) {
+                                    try {
+                                      await fetch("/api/send-refund-email", {
+                                        method: "POST",
+                                        headers: { "Content-Type": "application/json" },
+                                        body: JSON.stringify({ email: profile.email, customerName: r.customerName, orderNumber: r.orderNumber, total: r.total, status: "approved", reason: r.reason }),
+                                      });
+                                    } catch (e) { console.error("Refund email failed:", e); }
+                                  }
+                                }
                               }}
                               className="bg-green-500 hover:bg-green-600 text-white text-xs font-bold px-4 py-2 rounded-xl transition"
                             >
@@ -594,6 +615,19 @@ export default function AdminPage() {
                               onClick={async () => {
                                 await updateRefundStatus(r.id, "rejected");
                                 setRefunds(prev => prev.map(x => x.id === r.id ? { ...x, status: "rejected" } : x));
+                                const order = orders.find(o => o.orderNumber === r.orderNumber);
+                                if (order?.userId) {
+                                  const { data: profile } = await supabase.from("profiles").select("email").eq("id", order.userId).maybeSingle();
+                                  if (profile?.email) {
+                                    try {
+                                      await fetch("/api/send-refund-email", {
+                                        method: "POST",
+                                        headers: { "Content-Type": "application/json" },
+                                        body: JSON.stringify({ email: profile.email, customerName: r.customerName, orderNumber: r.orderNumber, total: r.total, status: "rejected", reason: r.reason }),
+                                      });
+                                    } catch (e) { console.error("Refund email failed:", e); }
+                                  }
+                                }
                               }}
                               className="border border-red-200 text-red-400 hover:border-red-400 text-xs font-bold px-4 py-2 rounded-xl transition"
                             >

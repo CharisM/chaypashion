@@ -105,7 +105,19 @@ export default function ShopPage() {
 
       {/* NAVBAR */}
       <nav className="flex justify-between items-center px-12 py-4 bg-white shadow-sm">
-        <Link href="/"><h1 className="text-3xl font-serif italic">Chay Fashion</h1></Link>
+        <Link href="/" className="flex items-center gap-2.5">
+          <svg viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8">
+            <rect x="20" y="20" width="120" height="120" rx="4" transform="rotate(45 80 80)" stroke="currentColor" strokeWidth="3" fill="none"/>
+            <rect x="32" y="32" width="96" height="96" rx="2" transform="rotate(45 80 80)" stroke="currentColor" strokeWidth="1.2" fill="none" opacity="0.4"/>
+            <path d="M58 68 C58 58 68 52 78 52 C86 52 92 56 95 62" stroke="currentColor" strokeWidth="4" strokeLinecap="round" fill="none"/>
+            <path d="M58 92 C58 102 68 108 78 108 C86 108 92 104 95 98" stroke="currentColor" strokeWidth="4" strokeLinecap="round" fill="none"/>
+            <line x1="58" y1="68" x2="58" y2="92" stroke="currentColor" strokeWidth="4" strokeLinecap="round"/>
+            <line x1="102" y1="52" x2="102" y2="108" stroke="currentColor" strokeWidth="4" strokeLinecap="round"/>
+            <line x1="102" y1="52" x2="122" y2="52" stroke="currentColor" strokeWidth="4" strokeLinecap="round"/>
+            <line x1="102" y1="80" x2="118" y2="80" stroke="currentColor" strokeWidth="4" strokeLinecap="round"/>
+          </svg>
+          <h1 className="text-3xl font-serif italic">Chay Fashion</h1>
+        </Link>
         <ul className="flex gap-8 text-sm font-medium items-center">
           <li>
             <form onSubmit={handleSearch} className="flex items-center border border-gray-300 rounded-full px-3 py-1.5 gap-2 hover:border-gray-500 transition">
@@ -241,14 +253,18 @@ export default function ShopPage() {
           </div>
           )}
         </AnimatePresence>
-        {visibleCount < filteredProducts.length && (
-          <div className="flex justify-center mt-10">
+        {filteredProducts.length > 8 && (
+          <div className="flex flex-col items-center gap-3 mt-10">
             <button
               onClick={() => setVisibleCount(v => v + 8)}
-              className="px-10 py-3 border-2 border-black text-sm font-semibold tracking-widest uppercase hover:bg-black hover:text-white transition"
+              disabled={visibleCount >= filteredProducts.length}
+              className="px-10 py-3 border-2 border-black text-sm font-semibold tracking-widest uppercase hover:bg-black hover:text-white transition disabled:opacity-30 disabled:cursor-not-allowed"
             >
-              Load More ({filteredProducts.length - visibleCount} remaining)
+              {visibleCount >= filteredProducts.length ? "All items loaded" : `Load More (${filteredProducts.length - visibleCount} remaining)`}
             </button>
+            <p className="text-xs text-gray-400">
+              Showing {Math.min(visibleCount, filteredProducts.length)} of {filteredProducts.length} items
+            </p>
           </div>
         )}
       </div>
@@ -257,7 +273,19 @@ export default function ShopPage() {
       <footer className="bg-black text-gray-400 pt-16 pb-8 px-16">
         <div className="grid grid-cols-5 gap-10 pb-12 border-b border-gray-800">
           <div className="col-span-1">
-            <h2 className="text-white text-2xl font-serif italic mb-4">Chay Fashion</h2>
+            <div className="flex items-center gap-2 mb-4">
+              <svg viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-7 h-7 text-white">
+                <rect x="20" y="20" width="120" height="120" rx="4" transform="rotate(45 80 80)" stroke="currentColor" strokeWidth="3" fill="none"/>
+                <rect x="32" y="32" width="96" height="96" rx="2" transform="rotate(45 80 80)" stroke="currentColor" strokeWidth="1.2" fill="none" opacity="0.4"/>
+                <path d="M58 68 C58 58 68 52 78 52 C86 52 92 56 95 62" stroke="currentColor" strokeWidth="4" strokeLinecap="round" fill="none"/>
+                <path d="M58 92 C58 102 68 108 78 108 C86 108 92 104 95 98" stroke="currentColor" strokeWidth="4" strokeLinecap="round" fill="none"/>
+                <line x1="58" y1="68" x2="58" y2="92" stroke="currentColor" strokeWidth="4" strokeLinecap="round"/>
+                <line x1="102" y1="52" x2="102" y2="108" stroke="currentColor" strokeWidth="4" strokeLinecap="round"/>
+                <line x1="102" y1="52" x2="122" y2="52" stroke="currentColor" strokeWidth="4" strokeLinecap="round"/>
+                <line x1="102" y1="80" x2="118" y2="80" stroke="currentColor" strokeWidth="4" strokeLinecap="round"/>
+              </svg>
+              <h2 className="text-white text-2xl font-serif italic">Chay Fashion</h2>
+            </div>
             <p className="text-sm leading-relaxed text-gray-500">Modern styles for everyday wear. Quality fashion made accessible for everyone.</p>
           </div>
           <div>

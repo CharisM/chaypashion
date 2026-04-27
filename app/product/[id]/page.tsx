@@ -11,6 +11,7 @@ import { useProducts } from "@/lib/use-products";
 import { addToCart, getCart } from "@/lib/cart";
 import { getStock } from "@/lib/stock";
 import { getReviews, submitReview, getAverageRating, Review } from "@/lib/reviews";
+import { notFound } from "next/navigation";
 import { motion } from "framer-motion";
 
 export default function ProductDetail() {
@@ -130,11 +131,7 @@ export default function ProductDetail() {
     </div>
   );
 
-  if (!product) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <p className="text-gray-500">Product not found.</p>
-    </div>
-  );
+  if (!product) return notFound();
 
   if (!loaded || !stockLoaded) return (
     <div className="min-h-screen flex items-center justify-center">

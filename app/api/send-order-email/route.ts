@@ -1,5 +1,6 @@
 import { Resend } from "resend";
 import { NextRequest, NextResponse } from "next/server";
+import { isRateLimited } from "@/lib/rate-limit";
 
 
 type EmailOrderItem = {
@@ -10,6 +11,10 @@ type EmailOrderItem = {
 };
 
 export async function POST(req: NextRequest) {
+  const ip = req.headers.get("x-forwarded-for") ?? "unknown";
+  if (isRateLimited(ip, 5, 60_000))
+    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+
   if (!process.env.RESEND_API_KEY || process.env.RESEND_API_KEY === "<your_resend_api_key>") {
     console.warn("RESEND_API_KEY not configured — skipping email.");
     return NextResponse.json({ success: true, skipped: true });
