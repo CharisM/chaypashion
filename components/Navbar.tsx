@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { FiSearch, FiUser, FiShoppingCart, FiMenu, FiX } from "react-icons/fi";
 import { supabase } from "@/lib/supabase";
 import { getCart } from "@/lib/cart";
-import { ADMIN_EMAIL } from "@/lib/orders";
 
 export default function Navbar() {
   const router = useRouter();
@@ -22,7 +21,6 @@ export default function Navbar() {
   useEffect(() => {
     const getUser = async (user: any) => {
       if (user) {
-        if (user.email === ADMIN_EMAIL) { router.replace("/admin"); return; }
         const { data } = await supabase.from("profiles").select("username").eq("id", user.id).maybeSingle();
         setUsername(data?.username ?? user.email ?? null);
         setUserId(user.id);

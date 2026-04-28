@@ -5,7 +5,6 @@ import { ADMIN_EMAIL } from "@/lib/orders";
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Allow admin login page through
   if (pathname === "/admin/login") return NextResponse.next();
 
   const response = NextResponse.next();
@@ -36,5 +35,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: ["/admin"],
 };
