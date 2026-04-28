@@ -1,7 +1,6 @@
-import { Resend } from "resend";
 import { NextRequest, NextResponse } from "next/server";
 import { isRateLimited } from "@/lib/rate-limit";
-
+import { transporter, FROM } from "@/lib/mailer";
 
 type EmailOrderItem = {
   name: string;
@@ -15,12 +14,10 @@ export async function POST(req: NextRequest) {
   if (isRateLimited(ip, 5, 60_000))
     return NextResponse.json({ error: "Too many requests" }, { status: 429 });
 
-  if (!process.env.RESEND_API_KEY || process.env.RESEND_API_KEY === "<your_resend_api_key>") {
-    console.warn("RESEND_API_KEY not configured — skipping email.");
+  if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+    console.warn("Gmail credentials not configured — skipping email.");
     return NextResponse.json({ success: true, skipped: true });
   }
-
-  const resend = new Resend(process.env.RESEND_API_KEY);
 
   const { email, orderNumber, items, subtotal, shipping, total, paymentMethod, deliveryAddress } = await req.json();
 
@@ -64,86 +61,68 @@ export async function POST(req: NextRequest) {
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
-  const { data, error } = await resend.emails.send({
-    from: "Chay Fashion <onboarding@resend.dev>",
-    to: email,
-    subject: `🎉 Order Confirmed – #${orderNumber}`,
-    html: `
-      <div style="font-family:Arial,sans-serif;max-width:580px;margin:0 auto;color:#333;background:#fff;">
-
-        <!-- HEADER -->
-        <div style="background:#000;padding:24px 32px;">
-          <h1 style="color:#fff;font-size:26px;font-style:italic;margin:0;">Chay Fashion</h1>
-        </div>
-
-        <!-- BODY -->
-        <div style="padding:32px;">
-          <h2 style="font-size:22px;margin:0 0 6px;">Order Confirmed! 🎉</h2>
-          <p style="color:#666;font-size:14px;margin:0 0 20px;">Thank you for shopping with us, your order is being prepared.</p>
-
-          <div style="background:#000;color:#fff;display:inline-block;padding:6px 18px;border-radius:999px;font-size:12px;letter-spacing:2px;text-transform:uppercase;margin-bottom:24px;">
-            Order #${orderNumber}
+  try {
+    await transporter.sendMail({
+      from: FROM,
+      to: email,
+      subject: `🎉 Order Confirmed – #${orderNumber}`,
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:580px;margin:0 auto;color:#333;background:#fff;">
+          <div style="background:#000;padding:24px 32px;">
+            <h1 style="color:#fff;font-size:26px;font-style:italic;margin:0;">Chay Fashion</h1>
           </div>
-
-          ${paymentBlock}
-          ${addressBlock}
-
-          <!-- ITEMS -->
-          <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
-            <thead>
+          <div style="padding:32px;">
+            <h2 style="font-size:22px;margin:0 0 6px;">Order Confirmed! 🎉</h2>
+            <p style="color:#666;font-size:14px;margin:0 0 20px;">Thank you for shopping with us, your order is being prepared.</p>
+            <div style="background:#000;color:#fff;display:inline-block;padding:6px 18px;border-radius:999px;font-size:12px;letter-spacing:2px;text-transform:uppercase;margin-bottom:24px;">
+              Order #${orderNumber}
+            </div>
+            ${paymentBlock}
+            ${addressBlock}
+            <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
+              <thead>
+                <tr>
+                  <th style="text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:2px;color:#999;padding-bottom:8px;border-bottom:2px solid #000;">Item</th>
+                  <th style="text-align:right;font-size:11px;text-transform:uppercase;letter-spacing:2px;color:#999;padding-bottom:8px;border-bottom:2px solid #000;">Price</th>
+                </tr>
+              </thead>
+              <tbody>${itemRows}</tbody>
+            </table>
+            <table style="width:100%;border-collapse:collapse;margin-bottom:24px;">
               <tr>
-                <th style="text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:2px;color:#999;padding-bottom:8px;border-bottom:2px solid #000;">Item</th>
-                <th style="text-align:right;font-size:11px;text-transform:uppercase;letter-spacing:2px;color:#999;padding-bottom:8px;border-bottom:2px solid #000;">Price</th>
+                <td style="font-size:13px;color:#666;padding:4px 0;">Subtotal</td>
+                <td style="font-size:13px;color:#666;padding:4px 0;text-align:right;">&#8369;${subtotal.toLocaleString()}</td>
               </tr>
-            </thead>
-            <tbody>${itemRows}</tbody>
-          </table>
-
-          <!-- TOTALS — table layout for email client compatibility -->
-          <table style="width:100%;border-collapse:collapse;margin-bottom:24px;">
-            <tr>
-              <td style="font-size:13px;color:#666;padding:4px 0;">Subtotal</td>
-              <td style="font-size:13px;color:#666;padding:4px 0;text-align:right;">&#8369;${subtotal.toLocaleString()}</td>
-            </tr>
-            <tr>
-              <td style="font-size:13px;color:#666;padding:4px 0;">Shipping</td>
-              <td style="font-size:13px;color:#666;padding:4px 0;text-align:right;">&#8369;${shipping.toLocaleString()}</td>
-            </tr>
-            <tr style="border-top:2px solid #000;">
-              <td style="font-size:16px;font-weight:bold;color:#000;padding:10px 0 0;">Total</td>
-              <td style="font-size:16px;font-weight:bold;color:#000;padding:10px 0 0;text-align:right;">&#8369;${total.toLocaleString()}</td>
-            </tr>
-          </table>
-
-          <!-- INFO BOX -->
-          <div style="background:#faf9f7;border-radius:12px;padding:16px;font-size:13px;color:#666;margin-bottom:24px;">
-            <p style="margin:0 0 6px;">📦 Ships within <strong style="color:#000;">1–2 business days</strong></p>
-            <p style="margin:0 0 6px;">🚚 Estimated delivery: <strong style="color:#000;">3–5 business days</strong></p>
-            <p style="margin:0;">📩 You'll receive updates when your order status changes.</p>
+              <tr>
+                <td style="font-size:13px;color:#666;padding:4px 0;">Shipping</td>
+                <td style="font-size:13px;color:#666;padding:4px 0;text-align:right;">&#8369;${shipping.toLocaleString()}</td>
+              </tr>
+              <tr style="border-top:2px solid #000;">
+                <td style="font-size:16px;font-weight:bold;color:#000;padding:10px 0 0;">Total</td>
+                <td style="font-size:16px;font-weight:bold;color:#000;padding:10px 0 0;text-align:right;">&#8369;${total.toLocaleString()}</td>
+              </tr>
+            </table>
+            <div style="background:#faf9f7;border-radius:12px;padding:16px;font-size:13px;color:#666;margin-bottom:24px;">
+              <p style="margin:0 0 6px;">📦 Ships within <strong style="color:#000;">1–2 business days</strong></p>
+              <p style="margin:0 0 6px;">🚚 Estimated delivery: <strong style="color:#000;">3–5 business days</strong></p>
+              <p style="margin:0;">📩 You'll receive updates when your order status changes.</p>
+            </div>
+            <div style="text-align:center;">
+              <a href="${siteUrl}/orders" style="display:inline-block;background:#000;color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-size:13px;font-weight:bold;letter-spacing:1px;">
+                View My Orders
+              </a>
+            </div>
           </div>
-
-          <!-- CTA -->
-          <div style="text-align:center;">
-            <a href="${siteUrl}/orders"
-              style="display:inline-block;background:#000;color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-size:13px;font-weight:bold;letter-spacing:1px;">
-              View My Orders
-            </a>
+          <div style="background:#f5f5f5;padding:16px 32px;text-align:center;font-size:11px;color:#999;">
+            © 2026 Chay Fashion. All rights reserved.<br/>
+            <a href="${siteUrl}" style="color:#999;text-decoration:none;">chayfashion.com</a>
           </div>
         </div>
-
-        <!-- FOOTER -->
-        <div style="background:#f5f5f5;padding:16px 32px;text-align:center;font-size:11px;color:#999;">
-          © 2026 Chay Fashion. All rights reserved.<br/>
-          <a href="${siteUrl}" style="color:#999;text-decoration:none;">chayfashion.com</a>
-        </div>
-      </div>
-    `,
-  });
-
-  if (error) {
-    console.error("Resend error:", error);
-    return NextResponse.json({ error }, { status: 500 });
+      `,
+    });
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error("Nodemailer error:", err);
+    return NextResponse.json({ error: "Failed to send email" }, { status: 500 });
   }
-
-  return NextResponse.json({ success: true, id: data?.id });
 }
