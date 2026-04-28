@@ -1,14 +1,12 @@
 "use client";
 
-export const dynamic = "force-dynamic";
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FiMail, FiArrowRight } from "react-icons/fi";
 import { sendOTP, verifyOTP } from "@/lib/auth";
 import { motion } from "framer-motion";
 
-export default function VerifyOTP() {
+function VerifyOTPInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
@@ -185,5 +183,13 @@ export default function VerifyOTP() {
         </motion.div>
       </div>
     </div>
+  );
+}
+
+export default function VerifyOTP() {
+  return (
+    <Suspense>
+      <VerifyOTPInner />
+    </Suspense>
   );
 }
