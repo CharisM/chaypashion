@@ -63,7 +63,7 @@ export default function Signup() {
       await supabase.from("profiles").upsert({ id: data.user.id, username, email, phone: number });
     }
 
-    setConfirmed(true);
+    router.push(`/verify-otp?email=${encodeURIComponent(email)}`);
   };
 
   // Success Screen
