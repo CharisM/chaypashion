@@ -25,7 +25,7 @@ export default function AdminLogin() {
     const { error: loginError } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (loginError) { setError("Invalid credentials. Please try again."); return; }
-    router.replace("/admin");
+    window.location.href = "/admin";
   };
 
   return (
