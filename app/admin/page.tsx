@@ -47,6 +47,9 @@ export default function AdminPage() {
   const [refunds, setRefunds] = useState<RefundRequest[]>([]);
   const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [showMessages, setShowMessages] = useState(true);
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState("");
+  const [sendingReply, setSendingReply] = useState(false);
   const [visibleCount, setVisibleCount] = useState(10);
   const { products, loading: productsLoading } = useProducts();
 
@@ -565,7 +568,7 @@ export default function AdminPage() {
                     ) : (
                       <div className="divide-y">
                         {messages.map(m => (
-                          <div key={m.id} className={`px-6 py-4 flex items-start justify-between gap-4 transition ${!m.read ? "bg-blue-50/40" : ""}`}>
+                          <div key={m.id} className={`px-6 py-4 flex flex-wrap items-start gap-4 transition ${!m.read ? "bg-blue-50/40" : ""}`}>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1">
                                 <p className="text-sm font-semibold text-gray-800">{m.name}</p>
@@ -574,16 +577,60 @@ export default function AdminPage() {
                               <p className="text-xs text-gray-400 mb-2">{m.email} &nbsp;·&nbsp; {new Date(m.createdAt).toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
                               <p className="text-sm text-gray-700 whitespace-pre-wrap">{m.message}</p>
                             </div>
-                            {!m.read && (
+                            <div className="flex flex-col gap-2 shrink-0">
+                              {!m.read && (
+                                <button
+                                  onClick={async () => {
+                                    await markMessageRead(m.id);
+                                    setMessages(prev => prev.map(x => x.id === m.id ? { ...x, read: true } : x));
+                                  }}
+                                  className="text-xs bg-black text-white px-3 py-1.5 rounded-lg hover:bg-gray-800 transition font-semibold"
+                                >
+                                  Mark Read
+                                </button>
+                              )}
                               <button
-                                onClick={async () => {
-                                  await markMessageRead(m.id);
-                                  setMessages(prev => prev.map(x => x.id === m.id ? { ...x, read: true } : x));
-                                }}
-                                className="shrink-0 text-xs bg-black text-white px-3 py-1.5 rounded-lg hover:bg-gray-800 transition font-semibold"
+                                onClick={() => { setReplyingTo(replyingTo === m.id ? null : m.id); setReplyText(""); }}
+                                className="text-xs border border-gray-300 text-gray-600 px-3 py-1.5 rounded-lg hover:border-black transition font-semibold"
                               >
-                                Mark Read
+                                {replyingTo === m.id ? "Cancel" : "Reply"}
                               </button>
+                            </div>
+                            {replyingTo === m.id && (
+                              <div className="w-full mt-3 flex flex-col gap-2">
+                                <textarea
+                                  rows={3}
+                                  value={replyText}
+                                  onChange={e => setReplyText(e.target.value)}
+                                  placeholder="Type your reply..."
+                                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-black resize-none"
+                                />
+                                <button
+                                  disabled={!replyText.trim() || sendingReply}
+                                  onClick={async () => {
+                                    setSendingReply(true);
+                                    const res = await fetch("/api/reply-message", {
+                                      method: "POST",
+                                      headers: { "Content-Type": "application/json" },
+                                      body: JSON.stringify({ toEmail: m.email, toName: m.name, originalMessage: m.message, replyText }),
+                                    });
+                                    setSendingReply(false);
+                                    if (res.ok) {
+                                      setReplyingTo(null);
+                                      setReplyText("");
+                                      if (!m.read) {
+                                        await markMessageRead(m.id);
+                                        setMessages(prev => prev.map(x => x.id === m.id ? { ...x, read: true } : x));
+                                      }
+                                    } else {
+                                      alert("Failed to send reply.");
+                                    }
+                                  }}
+                                  className="self-end text-xs bg-black text-white px-4 py-1.5 rounded-lg hover:bg-gray-800 transition font-semibold disabled:opacity-50"
+                                >
+                                  {sendingReply ? "Sending..." : "Send Reply"}
+                                </button>
+                              </div>
                             )}
                           </div>
                         ))}
