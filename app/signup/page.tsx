@@ -45,7 +45,6 @@ export default function Signup() {
     if (password !== confirmPassword) { setError("Passwords do not match."); return; }
     if (password.length < 6) { setError("Password must be at least 6 characters."); return; }
     if (strength?.label === "Weak") { setError("Password is too weak. Add uppercase letters, numbers, or symbols."); return; }
-
     setLoading(true);
     const { data, error: signupError } = await supabase.auth.signUp({ email, password });
     setLoading(false);

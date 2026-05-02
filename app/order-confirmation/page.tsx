@@ -21,12 +21,24 @@ export default function OrderConfirmationPage() {
 
   useEffect(() => {
     const load = async () => {
-      // Prevent duplicate order on page refresh
-      if (sessionStorage.getItem("chay_order_placed")) { setLoading(false); return; }
-
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setLoading(false); return; }
       const userId = user.id;
+
+      // Prevent duplicate order on page refresh — load last order from DB instead
+      if (sessionStorage.getItem("chay_order_placed")) {
+        const { data } = await supabase.from("orders").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(1).single();
+        if (data) {
+          setItems(data.items ?? []);
+          setOrderNumber(data.order_number);
+          setPaymentMethod(data.payment_method ?? "cod");
+          const addr = data.customer_address ? { fullName: data.customer_name ?? "", phone: data.customer_phone ?? "", address: data.customer_address, city: "", zip: "" } : null;
+          setDeliveryAddress(addr);
+        }
+        setLoading(false);
+        return;
+      }
+
       const cartItems = getCart(userId);
       if (cartItems.length === 0) { setLoading(false); return; }
       const payment = localStorage.getItem("chay_payment_method") ?? "cod";

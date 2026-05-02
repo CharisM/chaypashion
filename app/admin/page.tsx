@@ -5,9 +5,9 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { FiPackage, FiCheckCircle, FiChevronDown, FiChevronUp, FiClock, FiShield, FiSearch, FiTruck, FiX, FiAlertTriangle, FiBarChart2 } from "react-icons/fi";
+import { FiPackage, FiCheckCircle, FiChevronDown, FiChevronUp, FiClock, FiShield, FiTruck, FiX, FiBarChart2, FiMessageSquare } from "react-icons/fi";
 import { supabase } from "@/lib/supabase";
-import { getAllOrders, updateOrderStatus, updatePaymentStatus, getAllRefundRequests, updateRefundStatus, Order, OrderStatus, PaymentStatus, RefundRequest, isAdmin } from "@/lib/orders";
+import { getAllOrders, updateOrderStatus, updatePaymentStatus, getAllRefundRequests, updateRefundStatus, getAllContactMessages, markMessageRead, Order, OrderStatus, PaymentStatus, RefundRequest, ContactMessage, isAdmin } from "@/lib/orders";
 import { getStockMap, setStock, StockMap, LOW_STOCK_THRESHOLD } from "@/lib/stock";
 import { useProducts } from "@/lib/use-products";
 import { motion, AnimatePresence } from "framer-motion";
@@ -39,16 +39,14 @@ export default function AdminPage() {
   const [editingStock, setEditingStock] = useState<Record<number, number>>({});
   const [loading, setLoading] = useState(true);
   const [savedStock, setSavedStock] = useState<Record<number, boolean>>({});
-  const [dismissedAlert, setDismissedAlert] = useState(false);
   const [showReport, setShowReport] = useState(false);
   const [reportSort, setReportSort] = useState<"name" | "stock" | "value">("stock");
   const [showAnalytics, setShowAnalytics] = useState(true);
-  const [search, setSearch] = useState("");
-  const [filterStatus, setFilterStatus] = useState<OrderStatus | "all">("all");
-  const [filterPayment, setFilterPayment] = useState<PaymentStatus | "all">("all");
   const [updatingOrder, setUpdatingOrder] = useState<string | null>(null);
   const [proofModal, setProofModal] = useState<{ url: string; orderNumber: string; paymentStatus: PaymentStatus } | null>(null);
   const [refunds, setRefunds] = useState<RefundRequest[]>([]);
+  const [messages, setMessages] = useState<ContactMessage[]>([]);
+  const [showMessages, setShowMessages] = useState(true);
   const [visibleCount, setVisibleCount] = useState(10);
   const { products, loading: productsLoading } = useProducts();
 
@@ -61,6 +59,8 @@ export default function AdminPage() {
       setOrders(data);
       const refundData = await getAllRefundRequests();
       setRefunds(refundData);
+      const msgData = await getAllContactMessages();
+      setMessages(msgData);
       const sm = await getStockMap();
       setStockMapState(sm);
       setEditingStock(sm);
@@ -128,16 +128,7 @@ export default function AdminPage() {
     setTimeout(() => setSavedStock({}), 2000);
   };
 
-  const filtered = orders.filter(o => {
-    const matchSearch = search.trim() === "" ||
-      o.orderNumber.toLowerCase().includes(search.toLowerCase()) ||
-      (o.customerName ?? "").toLowerCase().includes(search.toLowerCase()) ||
-      (o.customerPhone ?? "").includes(search);
-    const matchStatus = filterStatus === "all" || o.status === filterStatus;
-    const matchPayment = filterPayment === "all" || o.paymentStatus === filterPayment;
-    return matchSearch && matchStatus && matchPayment;
-  });
-
+  const filtered = orders;
   const visibleFiltered = filtered.slice(0, visibleCount);
 
   const counts = {
@@ -225,7 +216,6 @@ export default function AdminPage() {
                   const delivered = orders.filter(o => o.status === "delivered");
                   const totalRevenue = delivered.reduce((s, o) => s + o.total, 0);
                   const totalOrders = orders.length;
-                  const avgOrderValue = delivered.length ? Math.round(totalRevenue / delivered.length) : 0;
                   const cancelRate = totalOrders ? Math.round((orders.filter(o => o.status === "cancelled").length / totalOrders) * 100) : 0;
 
                   // top products by quantity sold
@@ -263,7 +253,7 @@ export default function AdminPage() {
                         {[
                           { label: "Total Revenue", value: `₱${totalRevenue.toLocaleString()}`, sub: "from delivered orders", color: "text-[#c9a98a]" },
                           { label: "Total Orders", value: totalOrders, sub: `${delivered.length} delivered`, color: "text-gray-800" },
-                          { label: "Avg Order Value", value: `₱${avgOrderValue.toLocaleString()}`, sub: "per delivered order", color: "text-blue-600" },
+
                           { label: "Cancellation Rate", value: `${cancelRate}%`, sub: `${orders.filter(o => o.status === "cancelled").length} cancelled`, color: cancelRate > 20 ? "text-red-500" : "text-green-600" },
                         ].map((k, i) => (
                           <div key={i} className="bg-gray-50 rounded-xl p-4">
@@ -350,30 +340,6 @@ export default function AdminPage() {
               </AnimatePresence>
             </div>
 
-            {/* LOW STOCK ALERT BANNER */}
-            {!dismissedAlert && products.some(p => (stockMap[p.id] ?? 0) <= LOW_STOCK_THRESHOLD) && (
-              <div className="bg-orange-50 border border-orange-200 rounded-2xl px-6 py-4 flex items-start gap-4">
-                <FiAlertTriangle className="text-orange-500 text-xl shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <p className="text-sm font-bold text-orange-700 mb-1">Low Stock Alert</p>
-                  <div className="flex flex-wrap gap-2">
-                    {products.filter(p => (stockMap[p.id] ?? 0) === 0).map(p => (
-                      <span key={p.id} className="text-xs bg-red-100 text-red-600 font-semibold px-2 py-1 rounded-full">
-                        {p.name} — Out of Stock
-                      </span>
-                    ))}
-                    {products.filter(p => (stockMap[p.id] ?? 0) > 0 && (stockMap[p.id] ?? 0) <= LOW_STOCK_THRESHOLD).map(p => (
-                      <span key={p.id} className="text-xs bg-orange-100 text-orange-600 font-semibold px-2 py-1 rounded-full">
-                        {p.name} — {stockMap[p.id]} left
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                <button onClick={() => setDismissedAlert(true)} className="text-orange-400 hover:text-orange-600 transition shrink-0">
-                  <FiX />
-                </button>
-              </div>
-            )}
 
             {/* INVENTORY REPORT */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -568,6 +534,66 @@ export default function AdminPage() {
               </div>
             </div>
 
+            {/* CONTACT MESSAGES */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              <button
+                onClick={() => setShowMessages(v => !v)}
+                className="w-full flex items-center justify-between px-6 py-4 bg-gray-50 border-b hover:bg-gray-100 transition"
+              >
+                <div className="flex items-center gap-2">
+                  <FiMessageSquare className="text-gray-600" />
+                  <p className="text-xs tracking-[0.3em] uppercase font-bold text-gray-700">Customer Messages</p>
+                  {messages.filter(m => !m.read).length > 0 && (
+                    <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                      {messages.filter(m => !m.read).length} new
+                    </span>
+                  )}
+                </div>
+                {showMessages ? <FiChevronUp className="text-gray-400" /> : <FiChevronDown className="text-gray-400" />}
+              </button>
+              <AnimatePresence>
+                {showMessages && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="overflow-hidden"
+                  >
+                    {messages.length === 0 ? (
+                      <div className="px-6 py-10 text-center text-sm text-gray-400 italic">No messages yet.</div>
+                    ) : (
+                      <div className="divide-y">
+                        {messages.map(m => (
+                          <div key={m.id} className={`px-6 py-4 flex items-start justify-between gap-4 transition ${!m.read ? "bg-blue-50/40" : ""}`}>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <p className="text-sm font-semibold text-gray-800">{m.name}</p>
+                                {!m.read && <span className="text-[9px] bg-blue-500 text-white px-2 py-0.5 rounded-full font-bold uppercase tracking-widest">New</span>}
+                              </div>
+                              <p className="text-xs text-gray-400 mb-2">{m.email} &nbsp;·&nbsp; {new Date(m.createdAt).toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
+                              <p className="text-sm text-gray-700 whitespace-pre-wrap">{m.message}</p>
+                            </div>
+                            {!m.read && (
+                              <button
+                                onClick={async () => {
+                                  await markMessageRead(m.id);
+                                  setMessages(prev => prev.map(x => x.id === m.id ? { ...x, read: true } : x));
+                                }}
+                                className="shrink-0 text-xs bg-black text-white px-3 py-1.5 rounded-lg hover:bg-gray-800 transition font-semibold"
+                              >
+                                Mark Read
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
             {/* REFUND REQUESTS */}
             {refunds.length > 0 && (
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -649,37 +675,6 @@ export default function AdminPage() {
                 </div>
               </div>
             )}
-
-            {/* FILTERS */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-6 py-4 flex flex-wrap gap-4 items-center">
-              <div className="flex items-center border border-gray-200 rounded-xl px-3 py-2 gap-2 flex-1 min-w-[200px]">
-                <FiSearch className="text-gray-400 shrink-0" />
-                <input
-                  type="text" value={search} onChange={e => { setSearch(e.target.value); setVisibleCount(10); }}
-                  placeholder="Search by order #, name, phone..."
-                  className="text-xs outline-none bg-transparent flex-1 placeholder-gray-400"
-                />
-                {search && <button onClick={() => setSearch("")}><FiX className="text-gray-400 text-xs" /></button>}
-              </div>
-              <select
-                value={filterStatus}
-                onChange={e => { setFilterStatus(e.target.value as OrderStatus | "all"); setVisibleCount(10); }}
-                className="border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-black"
-              >
-                <option value="all">All Statuses</option>
-                {STATUS_FLOW.map(s => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
-              </select>
-              <select
-                value={filterPayment}
-                onChange={e => { setFilterPayment(e.target.value as PaymentStatus | "all"); setVisibleCount(10); }}
-                className="border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-black"
-              >
-                <option value="all">All Payments</option>
-                <option value="unpaid">Unpaid</option>
-                <option value="paid">Paid</option>
-              </select>
-              <span className="text-xs text-gray-400 tracking-widest uppercase">{filtered.length} orders</span>
-            </div>
 
             {/* ORDERS */}
             {filtered.length === 0 ? (

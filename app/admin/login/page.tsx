@@ -6,7 +6,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { FiMail, FiLock, FiEye, FiEyeOff, FiShield, FiArrowRight } from "react-icons/fi";
 import { supabase } from "@/lib/supabase";
-import { ADMIN_EMAIL } from "@/lib/orders";
+import { ADMIN_EMAILS } from "@/lib/orders";
 import { motion } from "framer-motion";
 
 export default function AdminLogin() {
@@ -20,11 +20,18 @@ export default function AdminLogin() {
   const handleLogin = async () => {
     setError("");
     if (!email || !password) { setError("Please fill in all fields."); return; }
-    if (email !== ADMIN_EMAIL) { setError("Access denied. Invalid admin credentials."); return; }
     setLoading(true);
-    const { error: loginError } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error: loginError } = await supabase.auth.signInWithPassword({
+      email: email.trim().toLowerCase(),
+      password,
+    });
     setLoading(false);
-    if (loginError) { setError("Invalid credentials. Please try again."); return; }
+    if (loginError) { setError("Invalid email or password. Please try again."); return; }
+    if (!data.user?.email || !ADMIN_EMAILS.includes(data.user.email)) {
+      await supabase.auth.signOut();
+      setError("Access denied. This account does not have admin privileges.");
+      return;
+    }
     window.location.href = "/admin";
   };
 

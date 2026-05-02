@@ -10,7 +10,6 @@ import { supabase } from "@/lib/supabase";
 import { useProducts } from "@/lib/use-products";
 import { addToCart, getCart } from "@/lib/cart";
 import { getStock } from "@/lib/stock";
-import { getReviews, submitReview, getAverageRating, Review } from "@/lib/reviews";
 import { notFound } from "next/navigation";
 import { motion } from "framer-motion";
 
@@ -31,13 +30,6 @@ export default function ProductDetail() {
   const [selectedVariant, setSelectedVariant] = useState(0);
   const [stock, setStock] = useState<number | null>(null);
   const [zoomed, setZoomed] = useState(false);
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [reviewRating, setReviewRating] = useState(5);
-  const [reviewComment, setReviewComment] = useState("");
-  const [reviewError, setReviewError] = useState("");
-  const [reviewSuccess, setReviewSuccess] = useState(false);
-  const [submittingReview, setSubmittingReview] = useState(false);
-  const [hoverRating, setHoverRating] = useState(0);
   const dropdownRef = useRef<HTMLLIElement>(null);
 
   const currentImg = product?.variants ? product.variants[selectedVariant].img : product?.img;
@@ -45,7 +37,6 @@ export default function ProductDetail() {
   useEffect(() => {
     if (product) {
       getStock(product.id).then(v => { setStock(v); setStockLoaded(true); });
-      getReviews(product.id).then(setReviews);
     }
   }, [product]);
 
@@ -90,21 +81,6 @@ export default function ProductDetail() {
     setUsername(null);
     setDropdown(false);
     router.push("/");
-  };
-
-  const handleSubmitReview = async () => {
-    setReviewError("");
-    if (!username) { setReviewError("Please login to leave a review."); return; }
-    if (!reviewComment.trim()) { setReviewError("Please write a comment."); return; }
-    setSubmittingReview(true);
-    const { error } = await submitReview(product!.id, userId!, username, reviewRating, reviewComment.trim());
-    setSubmittingReview(false);
-    if (error) { setReviewError(error); return; }
-    setReviewSuccess(true);
-    setReviewComment("");
-    setReviewRating(5);
-    getReviews(product!.id).then(setReviews);
-    setTimeout(() => setReviewSuccess(false), 3000);
   };
 
   const handleAddToCart = () => {
@@ -336,98 +312,6 @@ export default function ProductDetail() {
         </div>
       </div>
 
-      {/* REVIEWS */}
-      <div className="max-w-5xl mx-auto px-8 py-12 border-t border-gray-100">
-        <div className="flex items-end gap-4 mb-8">
-          <div>
-            <span className="text-xs tracking-[0.3em] text-[#c9a98a] uppercase font-medium">Customer Feedback</span>
-            <h2 className="text-2xl font-bold mt-1">Reviews & Ratings</h2>
-          </div>
-          {reviews.length > 0 && (
-            <div className="ml-auto flex items-center gap-2">
-              <div className="flex">
-                {[1,2,3,4,5].map(s => (
-                  <span key={s} className={`text-lg ${s <= Math.round(getAverageRating(reviews)) ? "text-yellow-400" : "text-gray-200"}`}>★</span>
-                ))}
-              </div>
-              <span className="text-sm font-bold text-gray-700">{getAverageRating(reviews).toFixed(1)}</span>
-              <span className="text-xs text-gray-400">({reviews.length} review{reviews.length !== 1 ? "s" : ""})</span>
-            </div>
-          )}
-        </div>
-
-        {/* SUBMIT REVIEW */}
-        <div className="bg-[#faf9f7] rounded-2xl p-6 mb-8 border border-[#e8e0d8]">
-          <p className="text-sm font-semibold mb-4">Leave a Review</p>
-          {/* STAR PICKER */}
-          <div className="flex gap-1 mb-4">
-            {[1,2,3,4,5].map(s => (
-              <button
-                key={s}
-                onMouseEnter={() => setHoverRating(s)}
-                onMouseLeave={() => setHoverRating(0)}
-                onClick={() => setReviewRating(s)}
-                className="text-2xl transition"
-              >
-                <span className={s <= (hoverRating || reviewRating) ? "text-yellow-400" : "text-gray-300"}>★</span>
-              </button>
-            ))}
-            <span className="text-xs text-gray-400 ml-2 self-center">{["Terrible","Bad","Okay","Good","Excellent"][reviewRating - 1]}</span>
-          </div>
-          <textarea
-            value={reviewComment}
-            onChange={e => setReviewComment(e.target.value)}
-            placeholder={username ? "Share your thoughts about this product..." : "Please login to leave a review."}
-            disabled={!username}
-            rows={3}
-            className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-black resize-none bg-white disabled:bg-gray-50 disabled:text-gray-400"
-          />
-          {reviewError && <p className="text-red-500 text-xs mt-2">{reviewError}</p>}
-          {reviewSuccess && <p className="text-green-600 text-xs mt-2">✓ Review submitted! Thank you.</p>}
-          <button
-            onClick={handleSubmitReview}
-            disabled={submittingReview || !username}
-            className="mt-3 bg-black text-white text-xs font-bold px-6 py-2.5 rounded-xl hover:bg-gray-800 transition disabled:opacity-50 tracking-widest uppercase"
-          >
-            {submittingReview ? "Submitting..." : "Submit Review"}
-          </button>
-          {!username && (
-            <Link href="/login" className="ml-3 text-xs text-blue-500 hover:underline">Login to review</Link>
-          )}
-        </div>
-
-        {/* REVIEW LIST */}
-        {reviews.length === 0 ? (
-          <div className="text-center py-12 text-gray-400">
-            <p className="text-4xl mb-3">★</p>
-            <p className="text-sm">No reviews yet. Be the first to review this product!</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {reviews.map((r) => (
-              <motion.div
-                key={r.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm"
-              >
-                <div className="flex items-start justify-between mb-2">
-                  <div>
-                    <p className="text-sm font-semibold text-gray-800">{r.username}</p>
-                    <p className="text-[10px] text-gray-400 mt-0.5">{new Date(r.createdAt).toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" })}</p>
-                  </div>
-                  <div className="flex">
-                    {[1,2,3,4,5].map(s => (
-                      <span key={s} className={`text-sm ${s <= r.rating ? "text-yellow-400" : "text-gray-200"}`}>★</span>
-                    ))}
-                  </div>
-                </div>
-                <p className="text-sm text-gray-600 leading-relaxed">{r.comment}</p>
-              </motion.div>
-            ))}
-          </div>
-        )}
-      </div>
 
       {/* FOOTER */}
       <footer className="bg-black text-gray-400 pt-16 pb-8 px-16 mt-16">

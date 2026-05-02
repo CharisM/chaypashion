@@ -62,7 +62,7 @@ export default function Navbar() {
     setUsername(null);
     setDropdown(false);
     setMobileOpen(false);
-    router.push("/");
+    window.location.href = "/";
   };
 
   return (
@@ -76,6 +76,7 @@ export default function Navbar() {
         <ul className="hidden md:flex gap-8 text-sm font-medium items-center">
           <li><Link href="/" className="hover:text-gray-500 transition">HOME</Link></li>
           <li><Link href="/about" className="hover:text-gray-500 transition">ABOUT</Link></li>
+          <li><Link href="/contact" className="hover:text-gray-500 transition">CONTACT</Link></li>
           <li>
             <Link href="/cart" className="relative flex items-center hover:opacity-70 transition">
               <FiShoppingCart className="text-xl" />
@@ -136,6 +137,7 @@ export default function Navbar() {
           </form>
           <Link href="/" onClick={() => setMobileOpen(false)} className="block text-sm font-medium py-2 border-b border-gray-50">HOME</Link>
           <Link href="/about" onClick={() => setMobileOpen(false)} className="block text-sm font-medium py-2 border-b border-gray-50">ABOUT</Link>
+          <Link href="/contact" onClick={() => setMobileOpen(false)} className="block text-sm font-medium py-2 border-b border-gray-50">CONTACT</Link>
           {username ? (
             <>
               <Link href="/profile" onClick={() => setMobileOpen(false)} className="block text-sm font-medium py-2 border-b border-gray-50">Profile</Link>

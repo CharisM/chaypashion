@@ -67,11 +67,20 @@ export default function Home() {
     };
     supabase.auth.getSession().then(({ data: { session } }) => getUser(session?.user ?? null));
     getStockMap().then(setStockMap);
+
+    const stockChannel = supabase
+      .channel("home-stock")
+      .on("postgres_changes", { event: "*", schema: "public", table: "stock" }, (payload: any) => {
+        const { product_id, quantity } = payload.new;
+        setStockMap(prev => ({ ...prev, [product_id]: quantity }));
+      })
+      .subscribe();
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "TOKEN_REFRESHED" || event === "SIGNED_IN") getUser(session?.user ?? null);
       else if (event === "SIGNED_OUT") { setUsername(null); setUserId(null); setLoaded(true); }
     });
-    return () => subscription.unsubscribe();
+    return () => { subscription.unsubscribe(); supabase.removeChannel(stockChannel); };
   }, []);
 
   return (
@@ -119,29 +128,6 @@ export default function Home() {
             </Link>
           </motion.div>
         </div>
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2">
-          <span className="text-white/40 text-[10px] tracking-[0.4em] uppercase">Scroll</span>
-          <div className="w-px h-10 bg-white/25 animate-pulse" />
-        </div>
-      </div>
-
-      {/* CATEGORY STRIP */}
-      <div className="bg-black text-white py-5 px-10">
-        <div className="max-w-6xl mx-auto flex flex-wrap justify-center gap-12">
-          {[
-            { label: "Dresses", cat: "Dress" },
-            { label: "Watches", cat: "Watch" },
-            { label: "Body Essentials", cat: "Herborist Scrub" },
-          ].map(({ label, cat }) => (
-            <button
-              key={cat}
-              onClick={() => { setFilter(cat); document.getElementById("new-arrivals")?.scrollIntoView({ behavior: "smooth" }); }}
-              className="text-xs tracking-[0.4em] uppercase font-medium text-gray-400 hover:text-[#c9a98a] transition border-b border-transparent hover:border-[#c9a98a] pb-1"
-            >
-              {label}
-            </button>
-          ))}
-        </div>
       </div>
       {/* PRODUCTS */}
       <div id="new-arrivals" className="bg-[#faf9f7] py-24 px-10">
@@ -175,7 +161,7 @@ export default function Home() {
 
           {/* SEARCH BAR */}
           <div className="mb-6">
-            <div className="flex items-center border border-gray-300 rounded-full px-5 py-3 gap-3 max-w-xl mx-auto hover:border-gray-500 transition bg-white shadow-sm">
+            <div className="flex items-center border border-gray-300 rounded-full px-5 py-3 gap-3 w-full hover:border-gray-500 transition bg-white shadow-sm">
               <FiSearch className="text-gray-400 text-lg shrink-0" />
               <input
                 type="text"
@@ -223,7 +209,7 @@ export default function Home() {
                           alt={item.name}
                           className="w-full h-[280px] object-cover transition-transform duration-700 group-hover:scale-110"
                         />
-                        {(stockMap[item.id] ?? 1) === 0 && (
+                        {(stockMap[item.id] ?? 0) === 0 && (
                           <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                             <span className="bg-white text-black text-xs font-bold px-3 py-1 rounded-full tracking-widest uppercase">Out of Stock</span>
                           </div>
@@ -238,9 +224,9 @@ export default function Home() {
                           <p className="text-sm font-bold text-[#c9a98a]">₱{item.price.toLocaleString()}</p>
                           <button
                             onClick={(e) => handleAddToCart(e, item)}
-                            disabled={(stockMap[item.id] ?? 1) === 0}
+                            disabled={(stockMap[item.id] ?? 0) === 0}
                             className={`w-8 h-8 rounded-full flex items-center justify-center transition ${
-                              (stockMap[item.id] ?? 1) === 0
+                              (stockMap[item.id] ?? 0) === 0
                                 ? "bg-gray-300 text-gray-400 cursor-not-allowed"
                                 : addedId === item.id
                                 ? "bg-green-500 text-white"

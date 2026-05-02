@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { useEffect, useState, useRef } from "react";
-import { FiSearch, FiUser, FiFacebook, FiShoppingCart } from "react-icons/fi";
+import { FiUser, FiFacebook, FiShoppingCart } from "react-icons/fi";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -14,15 +14,9 @@ export default function About() {
   const router = useRouter();
   const [username, setUsername] = useState<string | null>(null);
   const [dropdown, setDropdown] = useState(false);
-  const [search, setSearch] = useState("");
   const [cartCount, setCartCount] = useState(0);
   const [userId, setUserId] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLLIElement>(null);
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (search.trim()) router.push(`/search?q=${encodeURIComponent(search.trim())}`);
-  };
 
   useEffect(() => {
     const getUser = async (user: any) => {
@@ -74,14 +68,9 @@ export default function About() {
       <nav className="flex justify-between items-center px-12 py-4 bg-white shadow-sm">
         <Link href="/"><h1 className="text-3xl font-serif italic">Chay Fashion</h1></Link>
         <ul className="flex gap-8 text-sm font-medium items-center">
-          <li>
-            <form onSubmit={handleSearch} className="flex items-center border border-gray-300 rounded-full px-3 py-1.5 gap-2 hover:border-gray-500 transition">
-              <FiSearch className="text-gray-400 text-sm shrink-0" />
-              <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search products..." className="text-xs outline-none bg-transparent w-36 placeholder-gray-400" />
-            </form>
-          </li>
           <li><Link href="/">HOME</Link></li>
           <li className="text-blue-600">ABOUT</li>
+          <li><Link href="/contact">CONTACT</Link></li>
           <li>
             <Link href="/cart" className="relative flex items-center hover:opacity-70 transition">
               <FiShoppingCart className="text-xl" />

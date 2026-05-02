@@ -2,11 +2,12 @@ import { CartItem } from "@/lib/cart";
 import { supabase } from "@/lib/supabase";
 import { getStock } from "@/lib/stock";
 
-export const ADMIN_EMAIL = "chayfashion.admin@gmail.com";
+export const ADMIN_EMAILS = ["miercharis@gmail.com"];
+export const ADMIN_EMAIL = ADMIN_EMAILS[0]; // kept for backward compat
 
 export const isAdmin = async (): Promise<boolean> => {
   const { data: { user } } = await supabase.auth.getUser();
-  return user?.email === ADMIN_EMAIL;
+  return !!user?.email && ADMIN_EMAILS.includes(user.email);
 };
 
 export type OrderStatus = "pending" | "processing" | "shipped" | "delivered" | "cancelled";
@@ -188,4 +189,28 @@ export const getAllRefundRequests = async (): Promise<RefundRequest[]> => {
 
 export const updateRefundStatus = async (id: string, status: RefundStatus) => {
   await supabase.from("refund_requests").update({ status }).eq("id", id);
+};
+
+export type ContactMessage = {
+  id: string;
+  name: string;
+  email: string;
+  message: string;
+  read: boolean;
+  createdAt: string;
+};
+
+export const saveContactMessage = async (name: string, email: string, message: string): Promise<{ error: string | null }> => {
+  const { error } = await supabase.from("contact_messages").insert({ name, email, message, read: false });
+  return { error: error?.message ?? null };
+};
+
+export const getAllContactMessages = async (): Promise<ContactMessage[]> => {
+  const { data, error } = await supabase.from("contact_messages").select("*").order("created_at", { ascending: false });
+  if (error || !data) return [];
+  return data.map(m => ({ id: m.id, name: m.name, email: m.email, message: m.message, read: m.read, createdAt: m.created_at }));
+};
+
+export const markMessageRead = async (id: string): Promise<void> => {
+  await supabase.from("contact_messages").update({ read: true }).eq("id", id);
 };

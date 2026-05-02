@@ -2,13 +2,14 @@
 
 export const dynamic = "force-dynamic";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { FiShoppingBag, FiEdit2, FiCheck, FiX, FiSearch, FiUser, FiShoppingCart, FiArrowRight, FiTag, FiSmartphone, FiPackage, FiMapPin } from "react-icons/fi";
+import { FiShoppingBag, FiEdit2, FiCheck, FiX, FiArrowRight, FiSmartphone, FiPackage, FiMapPin } from "react-icons/fi";
 import Link from "next/link";
 import { getCart, removeFromCart, updateCartItem, CartItem } from "@/lib/cart";
 import { useProducts } from "@/lib/use-products";
+import Navbar from "@/components/Navbar";
 
 export default function CartPage() {
   const router = useRouter();
@@ -17,28 +18,14 @@ export default function CartPage() {
   const [editSize, setEditSize] = useState<string>("");
   const [editQty, setEditQty] = useState<number>(1);
   const [selected, setSelected] = useState<number[]>([]);
-  const [search, setSearch] = useState("");
-  const [dropdown, setDropdown] = useState(false);
-  const [username, setUsername] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [cartLoaded, setCartLoaded] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"gcash" | "cod">("cod");
-  const [address, setAddress] = useState({ fullName: "", phone: "", address: "", city: "", zip: "" });
+  const [address, setAddress] = useState({ fullName: "", phone: "", address: "", city: "" });
   const [gcashProof, setGcashProof] = useState<File | null>(null);
   const [gcashProofPreview, setGcashProofPreview] = useState<string | null>(null);
   const [uploadingProof, setUploadingProof] = useState(false);
-  const dropdownRef = useRef<HTMLLIElement>(null);
   const { products } = useProducts();
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (search.trim()) router.push(`/search?q=${encodeURIComponent(search.trim())}`);
-  };
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push("/");
-  };
 
   useEffect(() => {
     const check = async () => {
@@ -50,19 +37,8 @@ export default function CartPage() {
       setCart(cartItems);
       setSelected(cartItems.map((_, i) => i));
       setCartLoaded(true);
-      supabase.from("profiles").select("username").eq("id", user.id).maybeSingle()
-        .then(({ data }) => setUsername(data?.username ?? user.email ?? null));
     };
     check();
-  }, []);
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node))
-        setDropdown(false);
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleRemove = (index: number) => {
@@ -103,45 +79,7 @@ export default function CartPage() {
   return (
     <div className="min-h-screen bg-white">
 
-      {/* NAVBAR */}
-      <nav className="flex justify-between items-center px-4 md:px-12 py-4 bg-white border-b border-gray-100">
-        <Link href="/" className="text-2xl md:text-3xl font-serif italic">Chay Fashion</Link>
-        <ul className="flex gap-4 md:gap-8 text-sm font-medium items-center">
-          <li className="hidden md:block">
-            <form onSubmit={handleSearch} className="flex items-center border border-gray-200 rounded-full px-3 py-1.5 gap-2 hover:border-gray-400 transition">
-              <FiSearch className="text-gray-400 text-sm shrink-0" />
-              <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search products..." className="text-xs outline-none bg-transparent w-36 placeholder-gray-400" />
-            </form>
-          </li>
-          <li className="hidden md:block"><Link href="/" className="hover:text-gray-500 transition">HOME</Link></li>
-          <li className="hidden md:block"><Link href="/about" className="hover:text-gray-500 transition">ABOUT</Link></li>
-          <li>
-            <Link href="/cart" className="relative flex items-center">
-              <FiShoppingCart className="text-xl" />
-              {cart.length > 0 && (
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
-                  {cart.length > 9 ? "9+" : cart.length}
-                </span>
-              )}
-            </Link>
-          </li>
-          <li className="relative" ref={dropdownRef}>
-            <button onClick={() => setDropdown(!dropdown)} className="flex items-center gap-2 hover:opacity-80 transition">
-              <div className="w-9 h-9 rounded-full bg-black flex items-center justify-center">
-                <FiUser className="text-white text-lg" />
-              </div>
-              {username && <span className="hidden md:inline text-sm font-medium">{username}</span>}
-            </button>
-            {dropdown && (
-              <div className="absolute right-0 mt-2 w-44 bg-white border rounded-xl shadow-lg z-[999] overflow-hidden">
-                <Link href="/profile" onClick={() => setDropdown(false)} className="block px-4 py-2 text-sm hover:bg-gray-100">Profile</Link>
-                <Link href="/orders" onClick={() => setDropdown(false)} className="block px-4 py-2 text-sm hover:bg-gray-100">My Orders</Link>
-                <button onClick={handleLogout} className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-100">Logout</button>
-              </div>
-            )}
-          </li>
-        </ul>
-      </nav>
+      <Navbar />
 
       {/* LOADING */}
       {!cartLoaded ? (
@@ -347,15 +285,9 @@ export default function CartPage() {
               <p className="text-xs tracking-widest uppercase text-gray-400 font-medium mb-3 flex items-center gap-2"><FiMapPin /> Delivery Address</p>
               <div className="space-y-2">
                 <input type="text" placeholder="Full Name" value={address.fullName} onChange={e => setAddress(p => ({ ...p, fullName: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-black bg-white" />
-                <input type="text" placeholder="Phone Number (09XXXXXXXXX)" value={address.phone} onChange={e => setAddress(p => ({ ...p, phone: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-black bg-white" />
-                {address.phone && !/^09\d{9}$/.test(address.phone) && (
-                  <p className="text-red-400 text-[10px] mt-1 px-1">Must be 11 digits starting with 09</p>
-                )}
+                <input type="text" placeholder="Phone Number" value={address.phone} onChange={e => setAddress(p => ({ ...p, phone: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-black bg-white" />
                 <input type="text" placeholder="Street Address" value={address.address} onChange={e => setAddress(p => ({ ...p, address: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-black bg-white" />
-                <div className="flex gap-2">
-                  <input type="text" placeholder="City" value={address.city} onChange={e => setAddress(p => ({ ...p, city: e.target.value }))} className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-black bg-white" />
-                  <input type="text" placeholder="ZIP" value={address.zip} onChange={e => setAddress(p => ({ ...p, zip: e.target.value }))} className="w-20 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-black bg-white" />
-                </div>
+                <input type="text" placeholder="City" value={address.city} onChange={e => setAddress(p => ({ ...p, city: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-black bg-white" />
               </div>
             </div>
 
@@ -425,13 +357,6 @@ export default function CartPage() {
               )}
             </div>
 
-            <div className="flex gap-2 mb-6">
-              <div className="flex-1 flex items-center gap-2 border border-gray-200 rounded-xl px-3 py-2 bg-white">
-                <FiTag className="text-gray-400 text-sm shrink-0" />
-                <input type="text" placeholder="Promo code" className="text-xs outline-none bg-transparent flex-1 placeholder-gray-400" />
-              </div>
-              <button className="bg-black text-white text-xs px-4 rounded-xl font-semibold hover:bg-gray-800 transition">Apply</button>
-            </div>
 
             {selectedItems.length > 0 ? (
               <button

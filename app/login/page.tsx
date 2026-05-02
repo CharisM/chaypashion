@@ -25,7 +25,7 @@ export default function Login() {
     const { error: loginError } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (loginError) { setError(loginError.message); return; }
-    setTimeout(() => router.replace("/"), 100);
+    window.location.href = "/";
   };
 
   return (

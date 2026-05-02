@@ -22,6 +22,11 @@ export const deductStock = async (productId: number, qty: number = 1): Promise<{
 };
 
 export const setStock = async (productId: number, quantity: number): Promise<{ error: string | null }> => {
-  const { error } = await supabase.from("stock").upsert({ product_id: productId, quantity });
-  return { error: error?.message ?? null };
+  const res = await fetch("/api/set-stock", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ productId, quantity }),
+  });
+  const json = await res.json();
+  return { error: json.error ?? null };
 };
