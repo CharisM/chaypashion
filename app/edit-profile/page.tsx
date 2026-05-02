@@ -45,11 +45,6 @@ export default function EditProfilePage() {
   return (
     <div className="min-h-screen bg-[#f5f5f5]">
 
-      <nav className="flex justify-between items-center px-12 py-4 bg-white shadow-sm">
-        <Link href="/" className="text-3xl font-serif italic">Chay Fashion</Link>
-        <Link href="/profile" className="text-sm text-gray-500 hover:text-black transition">← Back to Profile</Link>
-      </nav>
-
       {pageLoading ? (
         <div className="flex items-center justify-center min-h-[70vh]">
           <div className="w-8 h-8 border-2 border-black border-t-transparent rounded-full animate-spin" />
@@ -57,6 +52,8 @@ export default function EditProfilePage() {
       ) : (
       <div className="flex justify-center mt-16 px-4 pb-16">
         <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="bg-white rounded-3xl shadow-lg p-10 w-full max-w-md">
+
+          <Link href="/profile" className="text-sm text-gray-500 hover:text-black transition mb-6 inline-block">← Back to Profile</Link>
 
           <div className="flex flex-col items-center mb-8">
             <div className="w-20 h-20 rounded-full bg-black flex items-center justify-center mb-3">
