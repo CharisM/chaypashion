@@ -9,6 +9,7 @@ import { FiUser, FiMail, FiPhone, FiEdit2, FiCheck, FiX } from "react-icons/fi";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 
 export default function Profile() {
   const router = useRouter();
@@ -142,6 +143,7 @@ export default function Profile() {
         </motion.div>
       </div>
       )}
+      <Footer />
     </div>
   );
 }
