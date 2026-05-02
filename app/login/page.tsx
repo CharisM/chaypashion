@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FiMail, FiLock, FiEye, FiEyeOff, FiArrowRight } from "react-icons/fi";
 import { supabase } from "@/lib/supabase";
+import { ADMIN_EMAILS } from "@/lib/orders";
 import { motion } from "framer-motion";
 
 export default function Login() {
@@ -22,9 +23,13 @@ export default function Login() {
     if (!email || !password) { setError("Please fill in all fields."); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setError("Please enter a valid email address."); return; }
     setLoading(true);
-    const { error: loginError } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error: loginError } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (loginError) { setError(loginError.message); return; }
+    if (data.user?.email && ADMIN_EMAILS.includes(data.user.email)) {
+      window.location.href = "/admin";
+      return;
+    }
     window.location.href = "/";
   };
 

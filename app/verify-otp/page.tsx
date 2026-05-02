@@ -14,6 +14,7 @@ function VerifyOTPInner() {
   const [step, setStep] = useState<"email" | "otp">("email");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [countdown, setCountdown] = useState(0);
 
   useEffect(() => {
     const emailParam = searchParams.get("email");
@@ -22,6 +23,14 @@ function VerifyOTPInner() {
       setStep("otp");
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    if (countdown <= 0) return;
+    const t = setTimeout(() => setCountdown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [countdown]);
+
+  const startCountdown = () => setCountdown(300);
 
   const handleSend = async () => {
     setError("");
@@ -34,6 +43,7 @@ function VerifyOTPInner() {
     setLoading(false);
     if (err) { setError(err.message); return; }
     setStep("otp");
+    startCountdown();
   };
 
   const handleVerify = async () => {
@@ -147,12 +157,27 @@ function VerifyOTPInner() {
                 onKeyDown={(e) => e.key === "Enter" && handleVerify()}
                 className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder-white/20 text-sm outline-none focus:border-[#c9a98a]/50 transition tracking-[0.5em] text-center"
               />
-              <button
-                onClick={() => { setStep("email"); setToken(""); setError(""); }}
-                className="text-xs text-white/30 hover:text-[#c9a98a] transition mt-2 block"
-              >
-                ← Change email
-              </button>
+              <div className="flex items-center justify-between mt-2">
+                <button
+                  onClick={() => { setStep("email"); setToken(""); setError(""); setCountdown(0); }}
+                  className="text-xs text-white/30 hover:text-[#c9a98a] transition"
+                >
+                  ← Change email
+                </button>
+                {countdown > 0 ? (
+                  <span className="text-xs text-white/30">
+                    Resend in {Math.floor(countdown / 60)}:{String(countdown % 60).padStart(2, "0")}
+                  </span>
+                ) : (
+                  <button
+                    onClick={handleSend}
+                    disabled={loading}
+                    className="text-xs text-[#c9a98a] hover:text-[#b8956f] transition disabled:opacity-50"
+                  >
+                    Resend OTP
+                  </button>
+                )}
+              </div>
             </div>
           )}
 

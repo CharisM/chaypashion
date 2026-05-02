@@ -5,9 +5,10 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { FiUser, FiPhone, FiSave, FiFacebook } from "react-icons/fi";
+import { FiUser, FiPhone, FiSave, FiMapPin, FiMail } from "react-icons/fi";
 import { supabase } from "@/lib/supabase";
 import { motion } from "framer-motion";
+import Navbar from "@/components/Navbar";
 
 export default function EditProfilePage() {
   const router = useRouter();
@@ -45,11 +46,7 @@ export default function EditProfilePage() {
   return (
     <div className="min-h-screen bg-[#f5f5f5]">
 
-      {/* NAVBAR */}
-      <nav className="flex justify-between items-center px-12 py-4 bg-white shadow-sm">
-        <Link href="/" className="text-3xl font-serif italic">Chay Fashion</Link>
-        <Link href="/profile" className="text-sm text-gray-500 hover:text-black transition">← Back to Profile</Link>
-      </nav>
+      <Navbar />
 
       {pageLoading ? (
         <div className="flex items-center justify-center min-h-[70vh]">
@@ -112,18 +109,45 @@ export default function EditProfilePage() {
       </div>
       )}
 
-      {/* FOOTER */}
-      <footer className="bg-black text-gray-400 py-6 px-16 flex justify-between items-center">
-        <p className="text-xs text-gray-600">© 2026 Chay Fashion. All rights reserved.</p>
-        <div className="flex items-center gap-6">
-          <a href="https://www.facebook.com/profile.php?id=61578244202994" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-white hover:text-blue-400 transition text-sm">
-            <FiFacebook className="text-lg" /><span className="font-medium">Chay Pasion</span>
-          </a>
-          <span className="text-gray-600">|</span>
-          <Link href="/privacy-policy" className="text-gray-300 hover:text-white transition text-xs">Privacy Policy</Link>
-          <span className="text-gray-600">|</span>
-          <Link href="/terms-of-service" className="text-gray-300 hover:text-white transition text-xs">Terms of Service</Link>
+      <footer className="bg-black text-gray-400 pt-16 pb-8 px-16">
+        <div className="grid grid-cols-5 gap-10 pb-12 border-b border-gray-800">
+          <div className="col-span-1">
+            <h2 className="text-white text-2xl font-serif italic mb-4">Chay Fashion</h2>
+            <p className="text-sm leading-relaxed text-gray-500">Modern styles for everyday wear. Quality fashion made accessible for everyone.</p>
+          </div>
+          <div>
+            <h3 className="text-white text-xs tracking-[0.2em] uppercase mb-5">Quick Links</h3>
+            <ul className="space-y-3 text-sm">
+              <li><Link href="/" className="hover:text-white transition">Home</Link></li>
+              <li><Link href="/about" className="hover:text-white transition">About</Link></li>
+            </ul>
+          </div>
+          <div>
+            <h3 className="text-white text-xs tracking-[0.2em] uppercase mb-5">Categories</h3>
+            <ul className="space-y-3 text-sm">
+              <li><Link href="/" className="hover:text-white transition">Dress</Link></li>
+              <li><Link href="/" className="hover:text-white transition">Watch</Link></li>
+              <li><Link href="/" className="hover:text-white transition">Herborist Scrub</Link></li>
+            </ul>
+          </div>
+          <div>
+            <h3 className="text-white text-xs tracking-[0.2em] uppercase mb-5">Account</h3>
+            <ul className="space-y-3 text-sm">
+              <li><Link href="/profile" className="hover:text-white transition">My Profile</Link></li>
+              <li><Link href="/cart" className="hover:text-white transition">My Cart</Link></li>
+              <li><Link href="/login" className="hover:text-white transition">Login</Link></li>
+            </ul>
+          </div>
+          <div>
+            <h3 className="text-white text-xs tracking-[0.2em] uppercase mb-5">More</h3>
+            <ul className="space-y-3 text-sm text-gray-500">
+              <li className="flex items-center gap-2"><FiMapPin className="shrink-0 text-base" /> Philippines</li>
+              <li className="flex items-center gap-2"><FiPhone className="shrink-0 text-base" /> 09123456789</li>
+              <li className="flex items-center gap-2"><FiMail className="shrink-0 text-base" /> support@chayfashion.com</li>
+            </ul>
+          </div>
         </div>
+
       </footer>
 
     </div>

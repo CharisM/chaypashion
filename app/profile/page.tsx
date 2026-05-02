@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { FiUser, FiMail, FiPhone } from "react-icons/fi";
+import { FiUser, FiMail, FiPhone, FiEdit2, FiCheck, FiX } from "react-icons/fi";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
@@ -14,6 +14,10 @@ export default function Profile() {
   const router = useRouter();
   const [profile, setProfile] = useState<{ username: string; phone: string; email: string } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [editingUsername, setEditingUsername] = useState(false);
+  const [newUsername, setNewUsername] = useState("");
+  const [savingUsername, setSavingUsername] = useState(false);
+  const [usernameError, setUsernameError] = useState("");
 
   useEffect(() => {
     const getProfile = async () => {
@@ -26,6 +30,19 @@ export default function Profile() {
     };
     getProfile();
   }, []);
+
+  const handleSaveUsername = async () => {
+    if (!newUsername.trim()) return;
+    setSavingUsername(true);
+    setUsernameError("");
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { error } = await supabase.from("profiles").update({ username: newUsername.trim() }).eq("id", user.id);
+    setSavingUsername(false);
+    if (error) { setUsernameError("Failed to save."); return; }
+    setProfile(prev => prev ? { ...prev, username: newUsername.trim() } : prev);
+    setEditingUsername(false);
+  };
 
 
   return (
@@ -68,9 +85,33 @@ export default function Profile() {
               <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
                 <FiUser className="text-gray-500 text-sm" />
               </div>
-              <div>
+              <div className="flex-1">
                 <p className="text-xs text-gray-400 mb-0.5">Username</p>
-                <p className="text-sm font-semibold">{profile?.username ?? "—"}</p>
+                {editingUsername ? (
+                  <div className="flex items-center gap-2">
+                    <input
+                      autoFocus
+                      value={newUsername}
+                      onChange={e => setNewUsername(e.target.value)}
+                      onKeyDown={e => { if (e.key === "Enter") handleSaveUsername(); if (e.key === "Escape") setEditingUsername(false); }}
+                      className="text-sm font-semibold border-b border-black outline-none bg-transparent flex-1"
+                    />
+                    <button onClick={handleSaveUsername} disabled={savingUsername} className="text-green-600 hover:text-green-700">
+                      <FiCheck size={16} />
+                    </button>
+                    <button onClick={() => setEditingUsername(false)} className="text-gray-400 hover:text-gray-600">
+                      <FiX size={16} />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-semibold">{profile?.username ?? "—"}</p>
+                    <button onClick={() => { setNewUsername(profile?.username ?? ""); setUsernameError(""); setEditingUsername(true); }} className="text-gray-400 hover:text-black transition">
+                      <FiEdit2 size={13} />
+                    </button>
+                  </div>
+                )}
+                {usernameError && <p className="text-red-500 text-xs mt-1">{usernameError}</p>}
               </div>
             </div>
             <div className="flex items-center gap-4 px-6 py-5">
