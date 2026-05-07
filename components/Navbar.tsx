@@ -24,7 +24,7 @@ export default function Navbar() {
   const [toast, setToast] = useState<Notification | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const notifRef = useRef<HTMLDivElement>(null);
+  const notifRef = useRef<HTMLLIElement>(null);
   const unreadCount = notifications.filter(n => !n.read).length;
   const [unreadMessages, setUnreadMessages] = useState(0);
 
