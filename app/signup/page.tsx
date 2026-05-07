@@ -45,24 +45,58 @@ export default function Signup() {
     if (password !== confirmPassword) { setError("Passwords do not match."); return; }
     if (password.length < 6) { setError("Password must be at least 6 characters."); return; }
     if (strength?.label === "Weak") { setError("Password is too weak. Add uppercase letters, numbers, or symbols."); return; }
+    
     setLoading(true);
-    const { data, error: signupError } = await supabase.auth.signUp({ email, password });
-    setLoading(false);
-
-    if (signupError) {
-      if (signupError.message.toLowerCase().includes("already registered") || signupError.message.toLowerCase().includes("already exists")) {
-        setError("This email is already registered. Please login instead.");
-      } else {
-        setError(signupError.message);
+    
+    try {
+      console.log('Attempting signup with:', { email, password: '***' });
+      
+      const { data, error: signupError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            username,
+            phone: number || null
+          }
+        }
+      });
+      
+      console.log('Signup response:', { data, error: signupError });
+      
+      if (signupError) {
+        console.error('Signup error:', signupError);
+        if (signupError.message.toLowerCase().includes("already registered") || 
+            signupError.message.toLowerCase().includes("already exists") ||
+            signupError.message.toLowerCase().includes("user already registered")) {
+          setError("This email is already registered. Please login instead.");
+        } else {
+          setError(signupError.message || "Signup failed. Please try again.");
+        }
+        setLoading(false);
+        return;
       }
-      return;
-    }
 
-    if (data.user) {
-      await supabase.from("profiles").upsert({ id: data.user.id, username, email, phone: number });
-    }
+      if (data.user) {
+        // Only create profile if user was successfully created
+        const { error: profileError } = await supabase.from("profiles").upsert(
+          { id: data.user.id, username, email, phone: number },
+          { onConflict: "id" }
+        );
+        
+        if (profileError) {
+          console.error('Profile creation error:', profileError);
+        }
+      }
 
-    router.push(`/verify-otp?email=${encodeURIComponent(email)}`);
+      setLoading(false);
+      router.push(`/verify-otp?email=${encodeURIComponent(email)}&username=${encodeURIComponent(username)}`);
+      
+    } catch (error) {
+      console.error('Unexpected error:', error);
+      setError("An unexpected error occurred. Please try again.");
+      setLoading(false);
+    }
   };
 
   // Success Screen

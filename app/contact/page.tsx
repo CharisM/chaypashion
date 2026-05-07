@@ -15,11 +15,13 @@ export default function Contact() {
   const [form, setForm] = useState({ name: "", email: "", message: "" });
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
     const prefill = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+      setUserId(user.id);
       const { data: profile } = await supabase.from("profiles").select("username").eq("id", user.id).maybeSingle();
       setForm(f => ({ ...f, name: profile?.username ?? "", email: user.email ?? "" }));
     };
@@ -29,7 +31,7 @@ export default function Contact() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    await saveContactMessage(form.name, form.email, form.message);
+    await saveContactMessage(form.name, form.email, form.message, userId ?? undefined);
     setLoading(false);
     setSent(true);
     setForm({ name: "", email: "", message: "" });

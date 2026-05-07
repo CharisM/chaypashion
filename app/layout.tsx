@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import AuthListener from "@/components/AuthListener";
 
 export const metadata: Metadata = {
   title: "Chay Fashion",
@@ -22,7 +23,7 @@ export default function RootLayout({
         } as React.CSSProperties
       }
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col"><AuthListener />{children}</body>
     </html>
   );
 }

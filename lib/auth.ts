@@ -4,6 +4,10 @@ export async function sendOTP(email: string) {
   return await supabase.auth.signInWithOtp({ email });
 }
 
+export async function sendLoginOTP(email: string) {
+  return await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: false } });
+}
+
 export async function verifyOTP(email: string, token: string) {
   return await supabase.auth.verifyOtp({ email, token, type: "email" });
 }

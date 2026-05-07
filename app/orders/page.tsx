@@ -2,6 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
+import nextDynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -10,6 +11,8 @@ import Navbar from "@/components/Navbar";
 import { supabase } from "@/lib/supabase";
 import { getOrders, cancelOrder, submitRefundRequest, Order } from "@/lib/orders";
 import { motion, AnimatePresence } from "framer-motion";
+
+const DeliveryMap = nextDynamic(() => import("@/components/DeliveryMap"), { ssr: false });
 
 export default function OrdersPage() {
   const router = useRouter();
@@ -46,13 +49,12 @@ export default function OrdersPage() {
   const handleCancel = async (orderNumber: string) => {
     if (!confirm("Are you sure you want to cancel this order?")) return;
     setCancelling(orderNumber);
-    try {
-      const { error } = await cancelOrder(orderNumber);
-      if (error) throw new Error(error);
+    const { error } = await cancelOrder(orderNumber, userId ?? undefined);
+    if (error) {
+      alert(error);
+    } else {
       setOrders(prev => prev.map(o => o.orderNumber === orderNumber ? { ...o, status: "cancelled" } : o));
       setNotification({ message: `Order #${orderNumber} has been cancelled.`, orderNumber });
-    } catch {
-      alert("Failed to cancel order. Please try again.");
     }
     setCancelling(null);
   };
@@ -383,6 +385,11 @@ export default function OrdersPage() {
                             <span>Total</span><span>₱{order.total.toLocaleString()}</span>
                           </div>
                         </div>
+                        {order.customerAddress && (
+                          <div className="mx-6 mb-4">
+                            <DeliveryMap address={order.customerAddress} />
+                          </div>
+                        )}
                       </div>
                     </motion.div>
                   )}

@@ -233,6 +233,36 @@ export default function About() {
         </div>
       </div>
 
+      {/* OUR PROMISE */}
+      <div className="bg-white py-24 px-8">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-16">
+            <span className="text-xs tracking-[0.4em] text-[#c9a98a] uppercase font-medium">Our Promise</span>
+            <h2 className="text-4xl font-bold mt-3">Why Choose Chay Fashion</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              { icon: "✦", title: "Handpicked Quality", desc: "Every item is carefully curated for style, comfort, and lasting value." },
+              { icon: "◈", title: "Authentic Products", desc: "Genuine Fossil watches, premium Herborist skincare, and elegant dresses." },
+              { icon: "⟡", title: "Fast & Secure", desc: "Safe checkout, reliable delivery, and dedicated customer support." },
+            ].map((f, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: i * 0.1 }}
+                className="text-center p-8 border border-gray-100 hover:border-[#c9a98a] hover:shadow-md transition group"
+              >
+                <span className="text-3xl text-[#c9a98a] inline-block group-hover:scale-110 transition">{f.icon}</span>
+                <h3 className="text-lg font-bold mt-4 mb-2">{f.title}</h3>
+                <p className="text-sm text-gray-500 leading-relaxed">{f.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {/* CTA */}
       <div className="bg-black py-20 px-8 text-center">
         <motion.div

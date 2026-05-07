@@ -4,12 +4,14 @@ import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FiMail, FiArrowRight } from "react-icons/fi";
 import { sendOTP, verifyOTP } from "@/lib/auth";
+import { supabase } from "@/lib/supabase";
 import { motion } from "framer-motion";
 
 function VerifyOTPInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [token, setToken] = useState("");
   const [step, setStep] = useState<"email" | "otp">("email");
   const [loading, setLoading] = useState(false);
@@ -18,10 +20,12 @@ function VerifyOTPInner() {
 
   useEffect(() => {
     const emailParam = searchParams.get("email");
+    const usernameParam = searchParams.get("username");
     if (emailParam) {
       setEmail(emailParam);
       setStep("otp");
     }
+    if (usernameParam) setUsername(usernameParam);
   }, [searchParams]);
 
   useEffect(() => {
@@ -53,6 +57,10 @@ function VerifyOTPInner() {
     const { error: err } = await verifyOTP(email, token);
     setLoading(false);
     if (err) { setError(err.message); return; }
+    if (username) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) await supabase.from("profiles").upsert({ id: user.id, username, email }, { onConflict: "id" });
+    }
     router.replace("/");
   };
 

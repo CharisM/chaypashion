@@ -1,9 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
 import { transporter, FROM } from "@/lib/mailer";
+import { createClient } from "@supabase/supabase-js";
+
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 export async function POST(req: NextRequest) {
-  const { toEmail, toName, originalMessage, replyText } = await req.json();
+  const { toEmail, toName, originalMessage, replyText, userId } = await req.json();
   if (!toEmail || !replyText) return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+
+  // Insert in-app notification
+  if (userId) {
+    await supabaseAdmin.from("notifications").insert({
+      user_id: userId,
+      title: "New message from Chay Fashion",
+      message: replyText.length > 100 ? replyText.slice(0, 100) + "..." : replyText,
+      type: "message",
+      read: false,
+    });
+  }
 
   try {
     await transporter.sendMail({

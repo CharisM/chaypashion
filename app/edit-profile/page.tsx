@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { FiUser, FiPhone, FiSave } from "react-icons/fi";
+import { FiUser, FiPhone, FiMapPin, FiSave } from "react-icons/fi";
 import { supabase } from "@/lib/supabase";
 import { motion } from "framer-motion";
 
@@ -13,6 +13,8 @@ export default function EditProfilePage() {
   const router = useRouter();
   const [username, setUsername] = useState("");
   const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [city, setCity] = useState("");
   const [loading, setLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
   const [saved, setSaved] = useState(false);
@@ -22,8 +24,8 @@ export default function EditProfilePage() {
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setTimeout(() => router.push("/login"), 0); return; }
-      const { data } = await supabase.from("profiles").select("username, phone, email").eq("id", user.id).maybeSingle();
-      if (data) { setUsername(data.username ?? ""); setPhone(data.phone ?? ""); }
+      const { data } = await supabase.from("profiles").select("username, phone, email, address, city").eq("id", user.id).maybeSingle();
+      if (data) { setUsername(data.username ?? ""); setPhone(data.phone ?? ""); setAddress(data.address ?? ""); setCity(data.city ?? ""); }
       setPageLoading(false);
     };
     load();
@@ -33,9 +35,15 @@ export default function EditProfilePage() {
     e.preventDefault();
     setLoading(true);
     setError("");
+    if (!username.trim() || !phone.trim() || !address.trim() || !city.trim()) {
+      setError("All fields are required."); setLoading(false); return;
+    }
+    if (!/^09\d{9}$/.test(phone)) {
+      setError("Phone number must be 11 digits starting with 09 (e.g. 09123456789)."); setLoading(false); return;
+    }
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { router.push("/login"); return; }
-    const { error: err } = await supabase.from("profiles").update({ username, phone }).eq("id", user.id);
+    const { error: err } = await supabase.from("profiles").update({ username, phone, address, city }).eq("id", user.id);
     setLoading(false);
     if (err) { setError("Failed to save. Please try again."); return; }
     setSaved(true);
@@ -89,6 +97,37 @@ export default function EditProfilePage() {
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="09XXXXXXXXX"
                   className="flex-1 text-sm outline-none bg-transparent"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs tracking-widest uppercase text-gray-400 mb-2 block">Street Address</label>
+              <div className="flex items-center border border-gray-200 rounded-xl px-4 py-3 gap-3 focus-within:border-black transition">
+                <FiMapPin className="text-gray-400 shrink-0" />
+                <input
+                  type="text"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  placeholder="House No., Street, Barangay"
+                  className="flex-1 text-sm outline-none bg-transparent"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs tracking-widest uppercase text-gray-400 mb-2 block">City</label>
+              <div className="flex items-center border border-gray-200 rounded-xl px-4 py-3 gap-3 focus-within:border-black transition">
+                <FiMapPin className="text-gray-400 shrink-0" />
+                <input
+                  type="text"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  placeholder="City / Municipality"
+                  className="flex-1 text-sm outline-none bg-transparent"
+                  required
                 />
               </div>
             </div>

@@ -89,6 +89,15 @@ export const saveOrder = async (order: Order, userId: string): Promise<{ error: 
     customer_address: order.customerAddress,
     gcash_proof_url: order.gcashProofUrl ?? null,
   });
+  if (!error) {
+    await supabase.from("notifications").insert({
+      user_id: userId,
+      title: "Order Placed Successfully! 🎉",
+      message: `Order #${order.orderNumber} · ₱${order.total.toLocaleString()} · ${order.paymentMethod?.toUpperCase()}`,
+      type: "order",
+      read: false,
+    });
+  }
   return { error: error?.message ?? null };
 };
 
@@ -103,18 +112,20 @@ export const updatePaymentStatus = async (orderNumber: string, paymentStatus: Pa
   return { error: error?.message ?? null };
 };
 
-export const cancelOrder = async (orderNumber: string): Promise<{ error: string | null }> => {
-  // fetch order items before cancelling to restore stock
-  const { data } = await supabase.from("orders").select("items, status").eq("order_number", orderNumber).single();
-  // only restore stock if order was not already cancelled
-  if (data && data.status !== "cancelled") {
+export const cancelOrder = async (orderNumber: string, userId?: string): Promise<{ error: string | null }> => {
+  const { data } = await supabase.from("orders").select("items, status, user_id").eq("order_number", orderNumber).single();
+  if (!data) return { error: "Order not found." };
+  if (data.status === "shipped" || data.status === "delivered") return { error: "Order cannot be cancelled at this stage." };
+  if (data.status !== "cancelled") {
     const items: CartItem[] = data.items ?? [];
     await Promise.all(items.map(async (item) => {
       const current = await getStock(item.id);
       await supabase.from("stock").update({ quantity: current + (item.qty ?? 1) }).eq("product_id", item.id);
     }));
   }
-  const { error } = await supabase.from("orders").update({ status: "cancelled", delivered: false }).eq("order_number", orderNumber);
+  let query = supabase.from("orders").update({ status: "cancelled", delivered: false }).eq("order_number", orderNumber);
+  if (userId) query = query.eq("user_id", userId);
+  const { error } = await query;
   return { error: error?.message ?? null };
 };
 
@@ -198,19 +209,46 @@ export type ContactMessage = {
   message: string;
   read: boolean;
   createdAt: string;
+  userId?: string;
+  adminReply?: string | null;
+  repliedAt?: string | null;
 };
 
-export const saveContactMessage = async (name: string, email: string, message: string): Promise<{ error: string | null }> => {
-  const { error } = await supabase.from("contact_messages").insert({ name, email, message, read: false });
+export const saveContactMessage = async (name: string, email: string, message: string, userId?: string): Promise<{ error: string | null }> => {
+  const { error } = await supabase.from("contact_messages").insert({ name, email, message, read: false, user_id: userId ?? null });
+  if (!error && userId) {
+    await supabase.from("notifications").insert({
+      user_id: userId,
+      title: "Message Sent to Admin",
+      message: message.length > 80 ? message.slice(0, 80) + "..." : message,
+      type: "message",
+      read: false,
+    });
+  }
   return { error: error?.message ?? null };
+};
+
+export const saveMessageReply = async (id: string, replyText: string): Promise<{ error: string | null }> => {
+  const { error } = await supabase.from("contact_messages").update({ admin_reply: replyText, replied_at: new Date().toISOString(), read: true }).eq("id", id);
+  return { error: error?.message ?? null };
+};
+
+export const getUserMessages = async (userId: string): Promise<ContactMessage[]> => {
+  const { data, error } = await supabase.from("contact_messages").select("*").eq("user_id", userId).order("created_at", { ascending: false });
+  if (error || !data) return [];
+  return data.map(m => ({ id: m.id, name: m.name, email: m.email, message: m.message, read: m.read, createdAt: m.created_at, userId: m.user_id, adminReply: m.admin_reply, repliedAt: m.replied_at }));
 };
 
 export const getAllContactMessages = async (): Promise<ContactMessage[]> => {
   const { data, error } = await supabase.from("contact_messages").select("*").order("created_at", { ascending: false });
   if (error || !data) return [];
-  return data.map(m => ({ id: m.id, name: m.name, email: m.email, message: m.message, read: m.read, createdAt: m.created_at }));
+  return data.map(m => ({ id: m.id, name: m.name, email: m.email, message: m.message, read: m.read, createdAt: m.created_at, userId: m.user_id, adminReply: m.admin_reply, repliedAt: m.replied_at }));
 };
 
 export const markMessageRead = async (id: string): Promise<void> => {
   await supabase.from("contact_messages").update({ read: true }).eq("id", id);
+};
+
+export const markUserMessagesRead = async (userId: string): Promise<void> => {
+  await supabase.from("contact_messages").update({ read: true }).eq("user_id", userId);
 };

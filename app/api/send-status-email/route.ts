@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isRateLimited } from "@/lib/rate-limit";
 import { transporter, FROM } from "@/lib/mailer";
+import { createClient } from "@supabase/supabase-js";
+
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 type StatusEmailItem = {
   name: string;
@@ -46,10 +52,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, skipped: true });
   }
 
-  const { email, orderNumber, status, total, items, customerName, customerAddress, expectedDelivery } = await req.json();
+  const { email, orderNumber, status, total, items, customerName, customerAddress, expectedDelivery, userId } = await req.json();
 
   const info = STATUS_INFO[status];
   if (!info) return NextResponse.json({ error: "Unknown status" }, { status: 400 });
+
+  // Always insert in-app notification if userId provided
+  if (userId) {
+    await supabaseAdmin.from("notifications").insert({
+      user_id: userId,
+      title: info.label,
+      message: `Order #${orderNumber} — ${info.message}`,
+      type: "order",
+      read: false,
+    });
+  }
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 

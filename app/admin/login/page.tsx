@@ -21,20 +21,39 @@ export default function AdminLogin() {
 
   const handleLogin = async () => {
     setError("");
-    if (!email || !password) { setError("Please fill in all fields."); return; }
-    setLoading(true);
-    const { data, error: loginError } = await supabase.auth.signInWithPassword({
-      email: email.trim().toLowerCase(),
-      password,
-    });
-    setLoading(false);
-    if (loginError) { setError("Invalid email or password. Please try again."); return; }
-    if (!data.user?.email || !ADMIN_EMAILS.includes(data.user.email)) {
-      await supabase.auth.signOut();
-      setError("Access denied. This account does not have admin privileges.");
-      return;
+    if (!email || !password) { 
+      setError("Please fill in all fields."); 
+      return; 
     }
-    window.location.href = "/admin";
+    
+    setLoading(true);
+    
+    try {
+      const { data, error: loginError } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password,
+      });
+      
+      if (loginError) {
+        setError("Invalid email or password. Please try again.");
+        setLoading(false);
+        return;
+      }
+      
+      if (!data.user?.email || !ADMIN_EMAILS.includes(data.user.email)) {
+        await supabase.auth.signOut();
+        setError("Access denied. This account does not have admin privileges.");
+        setLoading(false);
+        return;
+      }
+      
+      // Navigate to admin dashboard
+      window.location.href = "/admin";
+      
+    } catch (error) {
+      setError("An unexpected error occurred. Please try again.");
+      setLoading(false);
+    }
   };
 
   return (

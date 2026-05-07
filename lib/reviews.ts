@@ -58,3 +58,25 @@ export const getAverageRating = (reviews: Review[]) => {
   if (reviews.length === 0) return 0;
   return reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
 };
+
+export const getAllReviews = async (): Promise<Review[]> => {
+  const { data, error } = await supabase
+    .from("reviews")
+    .select("*")
+    .order("created_at", { ascending: false });
+  if (error || !data) return [];
+  return data.map((r) => ({
+    id: r.id,
+    productId: r.product_id,
+    userId: r.user_id,
+    username: r.username,
+    rating: r.rating,
+    comment: r.comment,
+    createdAt: r.created_at,
+  }));
+};
+
+export const deleteReview = async (id: string): Promise<{ error: string | null }> => {
+  const { error } = await supabase.from("reviews").delete().eq("id", id);
+  return { error: error?.message ?? null };
+};

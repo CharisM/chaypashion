@@ -22,6 +22,7 @@ export default function CartPage() {
   const [cartLoaded, setCartLoaded] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"gcash" | "cod">("cod");
   const [address, setAddress] = useState({ fullName: "", phone: "", address: "", city: "" });
+  const [addressErrors, setAddressErrors] = useState<Record<string, boolean>>({});
   const [gcashProof, setGcashProof] = useState<File | null>(null);
   const [gcashProofPreview, setGcashProofPreview] = useState<string | null>(null);
   const [uploadingProof, setUploadingProof] = useState(false);
@@ -36,6 +37,15 @@ export default function CartPage() {
       const cartItems = getCart(user.id);
       setCart(cartItems);
       setSelected(cartItems.map((_, i) => i));
+      const { data: profile } = await supabase.from("profiles").select("username, phone, address, city").eq("id", user.id).maybeSingle();
+      if (profile) {
+        setAddress({
+          fullName: profile.username ?? "",
+          phone: profile.phone ?? "",
+          address: profile.address ?? "",
+          city: profile.city ?? "",
+        });
+      }
       setCartLoaded(true);
     };
     check();
@@ -284,10 +294,22 @@ export default function CartPage() {
             <div className="mb-6">
               <p className="text-xs tracking-widest uppercase text-gray-400 font-medium mb-3 flex items-center gap-2"><FiMapPin /> Delivery Address</p>
               <div className="space-y-2">
-                <input type="text" placeholder="Full Name" value={address.fullName} onChange={e => setAddress(p => ({ ...p, fullName: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-black bg-white" />
-                <input type="text" placeholder="Phone Number" value={address.phone} onChange={e => setAddress(p => ({ ...p, phone: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-black bg-white" />
-                <input type="text" placeholder="Street Address" value={address.address} onChange={e => setAddress(p => ({ ...p, address: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-black bg-white" />
-                <input type="text" placeholder="City" value={address.city} onChange={e => setAddress(p => ({ ...p, city: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-black bg-white" />
+                <div>
+                  <input type="text" placeholder="Full Name *" value={address.fullName} onChange={e => { setAddress(p => ({ ...p, fullName: e.target.value })); setAddressErrors(p => ({ ...p, fullName: false })); }} className={`w-full border rounded-xl px-3 py-2 text-xs outline-none bg-white ${addressErrors.fullName ? "border-red-400 focus:border-red-500" : "border-gray-200 focus:border-black"}`} />
+                  {addressErrors.fullName && <p className="text-[10px] text-red-500 mt-1 ml-1">Full name is required</p>}
+                </div>
+                <div>
+                  <input type="text" placeholder="Phone Number * (e.g. 09123456789)" value={address.phone} onChange={e => { setAddress(p => ({ ...p, phone: e.target.value })); setAddressErrors(p => ({ ...p, phone: false })); }} className={`w-full border rounded-xl px-3 py-2 text-xs outline-none bg-white ${addressErrors.phone ? "border-red-400 focus:border-red-500" : "border-gray-200 focus:border-black"}`} />
+                  {addressErrors.phone && <p className="text-[10px] text-red-500 mt-1 ml-1">{address.phone ? "Must be 11 digits starting with 09" : "Phone number is required"}</p>}
+                </div>
+                <div>
+                  <input type="text" placeholder="Street Address *" value={address.address} onChange={e => { setAddress(p => ({ ...p, address: e.target.value })); setAddressErrors(p => ({ ...p, address: false })); }} className={`w-full border rounded-xl px-3 py-2 text-xs outline-none bg-white ${addressErrors.address ? "border-red-400 focus:border-red-500" : "border-gray-200 focus:border-black"}`} />
+                  {addressErrors.address && <p className="text-[10px] text-red-500 mt-1 ml-1">Street address is required</p>}
+                </div>
+                <div>
+                  <input type="text" placeholder="City *" value={address.city} onChange={e => { setAddress(p => ({ ...p, city: e.target.value })); setAddressErrors(p => ({ ...p, city: false })); }} className={`w-full border rounded-xl px-3 py-2 text-xs outline-none bg-white ${addressErrors.city ? "border-red-400 focus:border-red-500" : "border-gray-200 focus:border-black"}`} />
+                  {addressErrors.city && <p className="text-[10px] text-red-500 mt-1 ml-1">City is required</p>}
+                </div>
               </div>
             </div>
 
@@ -361,15 +383,17 @@ export default function CartPage() {
             {selectedItems.length > 0 ? (
               <button
                 onClick={async () => {
-                  if (!address.fullName || !address.phone || !address.address || !address.city) {
-                    alert("Please fill in all delivery address fields."); return;
-                  }
+                  const errors: Record<string, boolean> = {};
+                  if (!address.fullName) errors.fullName = true;
+                  if (!address.phone) errors.phone = true;
+                  if (!address.address) errors.address = true;
+                  if (!address.city) errors.city = true;
+                  if (address.phone && !/^09\d{9}$/.test(address.phone)) errors.phone = true;
+                  if (Object.keys(errors).length > 0) { setAddressErrors(errors); return; }
                   if (paymentMethod === "gcash" && !gcashProof) {
                     alert("Please upload your GCash proof of payment."); return;
                   }
-                  if (address.phone && !/^09\d{9}$/.test(address.phone)) {
-                    alert("Phone number must be 11 digits starting with 09 (e.g. 09123456789)."); return;
-                  }
+                  setAddressErrors({});
                   setUploadingProof(true);
                   let proofUrl: string | null = null;
                   if (paymentMethod === "gcash" && gcashProof) {

@@ -4,12 +4,13 @@ export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { FiFacebook, FiMapPin, FiPackage, FiTruck, FiMail, FiShoppingBag, FiArrowRight } from "react-icons/fi";
+import { FiFacebook, FiMapPin, FiPackage, FiTruck, FiMail, FiShoppingBag, FiArrowRight, FiMessageSquare, FiSend } from "react-icons/fi";
 import { getCart, CartItem } from "@/lib/cart";
-import { saveOrder, clearCart, PaymentStatus } from "@/lib/orders";
+import { saveOrder, clearCart, PaymentStatus, saveContactMessage } from "@/lib/orders";
 import { deductStock } from "@/lib/stock";
 import { supabase } from "@/lib/supabase";
 import { motion, AnimatePresence } from "framer-motion";
+import Navbar from "@/components/Navbar";
 
 export default function OrderConfirmationPage() {
   const [items, setItems] = useState<CartItem[]>([]);
@@ -18,6 +19,10 @@ export default function OrderConfirmationPage() {
   const [deliveryAddress, setDeliveryAddress] = useState<{ fullName: string; phone: string; address: string; city: string; zip: string } | null>(null);
   const [orderError, setOrderError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [msgText, setMsgText] = useState("");
+  const [msgSending, setMsgSending] = useState(false);
+  const [msgSent, setMsgSent] = useState(false);
+  const [currentUser, setCurrentUser] = useState<{ id: string; email: string; name: string } | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -34,6 +39,7 @@ export default function OrderConfirmationPage() {
           setPaymentMethod(data.payment_method ?? "cod");
           const addr = data.customer_address ? { fullName: data.customer_name ?? "", phone: data.customer_phone ?? "", address: data.customer_address, city: "", zip: "" } : null;
           setDeliveryAddress(addr);
+          setCurrentUser({ id: userId, email: user.email ?? "", name: data.customer_name ?? user.email ?? "" });
         }
         setLoading(false);
         return;
@@ -86,6 +92,7 @@ export default function OrderConfirmationPage() {
           });
         } catch (e) { console.error("Email send failed:", e); }
       }
+      setCurrentUser({ id: userId, email: user.email ?? "", name: parsedAddress?.fullName ?? user.email ?? "" });
       setItems(cartItems);
       setOrderNumber(num);
       setLoading(false);
@@ -98,20 +105,20 @@ export default function OrderConfirmationPage() {
   const total = subtotal + shipping;
 
   if (loading) return (
-    <div className="min-h-screen bg-[#faf9f7] flex items-center justify-center">
-      <div className="flex flex-col items-center gap-4">
-        <div className="w-10 h-10 border-2 border-black border-t-transparent rounded-full animate-spin" />
-        <p className="text-sm text-gray-400 tracking-widest uppercase">Processing your order...</p>
+    <div className="min-h-screen bg-[#faf9f7] flex flex-col">
+      <Navbar />
+      <div className="flex-1 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 border-2 border-black border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-gray-400 tracking-widest uppercase">Processing your order...</p>
+        </div>
       </div>
     </div>
   );
 
   if (orderError) return (
     <div className="min-h-screen bg-[#faf9f7] flex flex-col">
-      <nav className="flex justify-between items-center px-12 py-5 bg-white border-b border-gray-100">
-        <Link href="/" className="text-2xl font-serif italic tracking-wide">Chay Fashion</Link>
-        <Link href="/" className="text-xs text-gray-400 hover:text-black transition tracking-widest uppercase">← Home</Link>
-      </nav>
+      <Navbar />
       <div className="flex-1 flex items-center justify-center px-6">
         <div className="text-center max-w-md">
           <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-6">
@@ -127,12 +134,7 @@ export default function OrderConfirmationPage() {
 
   return (
     <div className="min-h-screen bg-[#faf9f7]">
-
-      {/* NAVBAR */}
-      <nav className="flex justify-between items-center px-12 py-5 bg-white border-b border-gray-100">
-        <Link href="/" className="text-2xl font-serif italic tracking-wide">Chay Fashion</Link>
-        <Link href="/" className="text-xs text-gray-400 hover:text-black transition tracking-widest uppercase">← Home</Link>
-      </nav>
+      <Navbar />
 
       <div className="max-w-3xl mx-auto px-6 py-16 space-y-6">
 
@@ -301,6 +303,56 @@ export default function OrderConfirmationPage() {
             <div className="flex justify-between text-base font-bold text-black pt-2.5 border-t border-gray-200">
               <span>Total</span><span>₱{total.toLocaleString()}</span>
             </div>
+          </div>
+        </motion.div>
+
+        {/* MESSAGE ADMIN */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.55, duration: 0.5 }}
+          className="bg-white rounded-3xl border border-gray-100 overflow-hidden"
+        >
+          <div className="px-7 py-5 border-b border-gray-100 flex items-center gap-2">
+            <div className="w-7 h-7 rounded-full bg-[#f5ede4] flex items-center justify-center">
+              <FiMessageSquare className="text-[#c9a98a] text-xs" />
+            </div>
+            <p className="text-xs tracking-[0.2em] uppercase text-gray-400 font-medium">Message Admin</p>
+          </div>
+          <div className="px-7 py-5">
+            {msgSent ? (
+              <div className="flex items-center gap-2 text-green-600 text-sm font-medium py-2">
+                <FiSend className="text-base" /> Message sent! We&apos;ll get back to you soon.
+              </div>
+            ) : (
+              <form onSubmit={async (e) => {
+                e.preventDefault();
+                if (!msgText.trim() || !currentUser) return;
+                setMsgSending(true);
+                await saveContactMessage(currentUser.name, currentUser.email, `[Order #${orderNumber}] ${msgText.trim()}`, currentUser.id);
+                setMsgSending(false);
+                setMsgSent(true);
+              }} className="flex flex-col gap-3">
+                <textarea
+                  rows={3}
+                  required
+                  value={msgText}
+                  onChange={e => setMsgText(e.target.value)}
+                  placeholder="Have a question about your order? Ask us here..."
+                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-black resize-none transition"
+                />
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={msgSending || !msgText.trim()}
+                    className="flex items-center gap-2 bg-black text-white px-5 py-2.5 rounded-xl text-xs font-bold tracking-widest uppercase hover:bg-gray-800 transition disabled:opacity-50"
+                  >
+                    <FiSend className="text-sm" />
+                    {msgSending ? "Sending..." : "Send Message"}
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </motion.div>
 

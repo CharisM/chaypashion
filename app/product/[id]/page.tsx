@@ -30,6 +30,11 @@ export default function ProductDetail() {
   const [selectedVariant, setSelectedVariant] = useState(0);
   const [stock, setStock] = useState<number | null>(null);
   const [zoomed, setZoomed] = useState(false);
+  const [zoomScale, setZoomScale] = useState(1);
+  const [zoomPos, setZoomPos] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStart = useRef({ x: 0, y: 0, posX: 0, posY: 0 });
+  const lastTouchDist = useRef<number | null>(null);
   const dropdownRef = useRef<HTMLLIElement>(null);
 
   const currentImg = product?.variants ? product.variants[selectedVariant].img : product?.img;
@@ -83,22 +88,35 @@ export default function ProductDetail() {
     router.push("/");
   };
 
-  const handleAddToCart = () => {
-    if (product!.category !== "Dress" && !selectedSize) { setCartMsg("Please select a size first."); return; }
-    if (stock !== null && stock <= 0) { setCartMsg("Sorry, this item is out of stock."); return; }
+  const buildCartItem = () => {
     const selectedColor = product!.variants ? product!.variants[selectedVariant].color : undefined;
     const cartImg = product!.variants ? product!.variants[selectedVariant].img : product!.img;
-    addToCart({
+    return {
       id: product!.id,
       name: product!.name + (selectedColor ? ` (${selectedColor})` : ""),
       img: cartImg,
       price: product!.price,
       size: product!.category === "Dress" ? "Free Size" : (selectedSize ?? product!.sizes[0]),
       category: product!.category
-    }, userId ?? undefined);
+    };
+  };
+
+  const handleAddToCart = () => {
+    if (product!.category !== "Dress" && !selectedSize) { setCartMsg("Please select a size first."); return; }
+    if (stock !== null && stock <= 0) { setCartMsg("Sorry, this item is out of stock."); return; }
+    addToCart(buildCartItem(), userId ?? undefined);
     setCartMsg(`✓ Added to cart!`);
     setCartCount(getCart(userId ?? undefined).length);
     setTimeout(() => setCartMsg(""), 3000);
+  };
+
+  const handleBuyNow = () => {
+    if (product!.category !== "Dress" && !selectedSize) { setCartMsg("Please select a size first."); return; }
+    if (stock !== null && stock <= 0) { setCartMsg("Sorry, this item is out of stock."); return; }
+    const item = buildCartItem();
+    // Store as a single-item buy-now cart without touching the real cart
+    localStorage.setItem("chay_buynow_item", JSON.stringify(item));
+    router.push("/buy-now");
   };
 
   if (productsLoading) return (
@@ -186,17 +204,51 @@ export default function ProductDetail() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/90 z-[9999] flex items-center justify-center cursor-zoom-out"
-              onClick={() => setZoomed(false)}
+              className="fixed inset-0 bg-black/95 z-[9999] flex items-center justify-center select-none"
+              onClick={(e) => { if (e.target === e.currentTarget) { setZoomed(false); setZoomScale(1); setZoomPos({ x: 0, y: 0 }); } }}
+              onWheel={(e) => {
+                e.preventDefault();
+                setZoomScale(s => Math.min(4, Math.max(1, s - e.deltaY * 0.002)));
+              }}
+              onTouchMove={(e) => {
+                if (e.touches.length === 2) {
+                  const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+                  if (lastTouchDist.current !== null) {
+                    const delta = dist - lastTouchDist.current;
+                    setZoomScale(s => Math.min(4, Math.max(1, s + delta * 0.01)));
+                  }
+                  lastTouchDist.current = dist;
+                }
+              }}
+              onTouchEnd={() => { lastTouchDist.current = null; }}
             >
               <motion.img
-                initial={{ scale: 0.8 }}
+                initial={{ scale: 0.85 }}
                 animate={{ scale: 1 }}
                 src={currentImg}
                 alt={product.name}
+                draggable={false}
+                style={{
+                  transform: `scale(${zoomScale}) translate(${zoomPos.x / zoomScale}px, ${zoomPos.y / zoomScale}px)`,
+                  cursor: zoomScale > 1 ? (isDragging ? "grabbing" : "grab") : "zoom-in",
+                  transition: isDragging ? "none" : "transform 0.15s ease",
+                }}
                 className="max-h-[90vh] max-w-[90vw] object-contain rounded-xl shadow-2xl"
+                onClick={() => { if (!isDragging) setZoomScale(s => s < 2 ? 2 : s < 3.5 ? 3.5 : 1); if (zoomScale === 1) setZoomPos({ x: 0, y: 0 }); }}
+                onMouseDown={(e) => { if (zoomScale <= 1) return; setIsDragging(true); dragStart.current = { x: e.clientX, y: e.clientY, posX: zoomPos.x, posY: zoomPos.y }; }}
+                onMouseMove={(e) => { if (!isDragging) return; setZoomPos({ x: dragStart.current.posX + (e.clientX - dragStart.current.x), y: dragStart.current.posY + (e.clientY - dragStart.current.y) }); }}
+                onMouseUp={() => setIsDragging(false)}
+                onMouseLeave={() => setIsDragging(false)}
               />
-              <button className="absolute top-6 right-6 text-white text-3xl hover:text-gray-300 transition">✕</button>
+              <button
+                className="absolute top-6 right-6 text-white text-3xl hover:text-gray-300 transition z-10"
+                onClick={() => { setZoomed(false); setZoomScale(1); setZoomPos({ x: 0, y: 0 }); }}
+              >✕</button>
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4">
+                <button onClick={() => { setZoomScale(s => Math.max(1, s - 0.5)); }} className="bg-white/20 hover:bg-white/40 text-white w-9 h-9 rounded-full text-xl flex items-center justify-center transition">−</button>
+                <span className="text-white text-xs tracking-widest">{Math.round(zoomScale * 100)}%</span>
+                <button onClick={() => setZoomScale(s => Math.min(4, s + 0.5))} className="bg-white/20 hover:bg-white/40 text-white w-9 h-9 rounded-full text-xl flex items-center justify-center transition">+</button>
+              </div>
             </motion.div>
           )}
 
@@ -285,19 +337,32 @@ export default function ProductDetail() {
               </div>
             )}
 
-            {/* ADD TO CART */}
-            <button
-              onClick={handleAddToCart}
-              disabled={stock === 0}
-              className={`ripple-btn flex items-center justify-center gap-3 py-4 text-sm font-semibold tracking-widest uppercase transition ${
-                stock === 0
-                  ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                  : "bg-black text-white hover:bg-gray-800"
-              }`}
-            >
-              <FiShoppingCart className="text-lg" />
-              {stock === 0 ? "Out of Stock" : "Add to Cart"}
-            </button>
+            {/* ADD TO CART + BUY NOW */}
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={handleAddToCart}
+                disabled={stock === 0}
+                className={`ripple-btn flex items-center justify-center gap-3 py-4 text-sm font-semibold tracking-widest uppercase transition ${
+                  stock === 0
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-black text-white hover:bg-gray-800"
+                }`}
+              >
+                <FiShoppingCart className="text-lg" />
+                {stock === 0 ? "Out of Stock" : "Add to Cart"}
+              </button>
+              <button
+                onClick={handleBuyNow}
+                disabled={stock === 0}
+                className={`flex items-center justify-center gap-3 py-4 text-sm font-semibold tracking-widest uppercase transition border-2 ${
+                  stock === 0
+                    ? "border-gray-200 text-gray-400 cursor-not-allowed"
+                    : "border-black text-black hover:bg-black hover:text-white"
+                }`}
+              >
+                Buy Now
+              </button>
+            </div>
 
             {cartMsg && (
               <motion.p
