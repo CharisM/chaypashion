@@ -46,7 +46,7 @@ export default function Navbar() {
       if (event === "TOKEN_REFRESHED" || event === "SIGNED_IN") getUser(session?.user ?? null);
       else if (event === "SIGNED_OUT") { setUsername(null); setUserId(null); setNotifications([]); setLoaded(true); }
     });
-    return () => subscription.unsubscribe();
+    return () => { subscription.unsubscribe(); };
   }, []);
 
   useEffect(() => {
@@ -58,12 +58,11 @@ export default function Navbar() {
     const unsub = subscribeNotifications(userId, (n) => {
       setNotifications(prev => [n, ...prev]);
       if (n.type === "message") setUnreadMessages(prev => prev + 1);
-      // show toast popup
       if (toastTimer.current) clearTimeout(toastTimer.current);
       setToast(n);
       toastTimer.current = setTimeout(() => setToast(null), 5000);
     });
-    return unsub;
+    return () => { unsub(); };
   }, [userId]);
 
   useEffect(() => {
