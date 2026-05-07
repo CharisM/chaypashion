@@ -78,19 +78,15 @@ export default function Signup() {
       }
 
       if (data.user) {
-        // Only create profile if user was successfully created
-        const { error: profileError } = await supabase.from("profiles").upsert(
-          { id: data.user.id, username, email, phone: number },
+        // Create profile immediately using upsert
+        await supabase.from("profiles").upsert(
+          { id: data.user.id, username, email, phone: number || null },
           { onConflict: "id" }
         );
-        
-        if (profileError) {
-          console.error('Profile creation error:', profileError);
-        }
       }
 
       setLoading(false);
-      router.push(`/verify-otp?email=${encodeURIComponent(email)}&username=${encodeURIComponent(username)}`);
+      router.push("/login");
       
     } catch (error) {
       console.error('Unexpected error:', error);

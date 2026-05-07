@@ -36,6 +36,26 @@ export default function MessagesPage() {
       if (data.length > 0) setOpenId(data[0].id);
       await markUserMessagesRead(user.id);
       setLoading(false);
+
+      // Real-time: update messages when admin replies
+      const channel = supabase
+        .channel("user-messages-realtime")
+        .on("postgres_changes",
+          { event: "UPDATE", schema: "public", table: "contact_messages", filter: `user_id=eq.${user.id}` },
+          (payload: { new: any }) => {
+            const m = payload.new;
+            setMessages(prev => prev.map(x => x.id === m.id ? {
+              ...x,
+              adminReply: m.admin_reply,
+              repliedAt: m.replied_at,
+              read: m.read,
+            } : x));
+            setOpenId(m.id);
+          }
+        )
+        .subscribe();
+
+      return () => { supabase.removeChannel(channel); };
     };
     load();
   }, []);

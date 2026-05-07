@@ -12,6 +12,7 @@ function VerifyOTPInner() {
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
+  const [phone, setPhone] = useState("");
   const [token, setToken] = useState("");
   const [step, setStep] = useState<"email" | "otp">("email");
   const [loading, setLoading] = useState(false);
@@ -21,11 +22,13 @@ function VerifyOTPInner() {
   useEffect(() => {
     const emailParam = searchParams.get("email");
     const usernameParam = searchParams.get("username");
+    const phoneParam = searchParams.get("phone");
     if (emailParam) {
       setEmail(emailParam);
       setStep("otp");
     }
     if (usernameParam) setUsername(usernameParam);
+    if (phoneParam) setPhone(phoneParam);
   }, [searchParams]);
 
   useEffect(() => {
@@ -59,7 +62,7 @@ function VerifyOTPInner() {
     if (err) { setError(err.message); return; }
     if (username) {
       const { data: { user } } = await supabase.auth.getUser();
-      if (user) await supabase.from("profiles").upsert({ id: user.id, username, email }, { onConflict: "id" });
+      if (user) await supabase.from("profiles").upsert({ id: user.id, username, email, phone: phone || null }, { onConflict: "id" });
     }
     router.replace("/");
   };

@@ -5,10 +5,9 @@ export const dynamic = "force-dynamic";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { FiMail, FiLock, FiEye, FiEyeOff, FiArrowRight, FiShield } from "react-icons/fi";
+import { FiMail, FiLock, FiEye, FiEyeOff, FiArrowRight } from "react-icons/fi";
 import { supabase } from "@/lib/supabase";
 import { ADMIN_EMAILS } from "@/lib/orders";
-import { verifyOTP } from "@/lib/auth";
 import { motion } from "framer-motion";
 
 export default function Login() {
@@ -18,52 +17,24 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [step, setStep] = useState<"credentials" | "otp">("credentials");
-  const [otp, setOtp] = useState("");
-  const [countdown, setCountdown] = useState(0);
-
-  useEffect(() => {
-    if (countdown <= 0) return;
-    const t = setTimeout(() => setCountdown(c => c - 1), 1000);
-    return () => clearTimeout(t);
-  }, [countdown]);
 
   const handleLogin = async () => {
     setError("");
     if (!email || !password) { setError("Please fill in all fields."); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setError("Please enter a valid email address."); return; }
-    // Block admin emails before even attempting login
     if (ADMIN_EMAILS.includes(email.trim().toLowerCase())) {
       setError("Admin accounts cannot log in here. Please use the Admin Portal.");
       return;
     }
     setLoading(true);
-    // Verify password first
-    const { data, error: loginError } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error: loginError } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
     if (loginError) { setLoading(false); setError("Invalid email or password."); return; }
-    // Double-check after login (safety net)
     if (data.user?.email && ADMIN_EMAILS.includes(data.user.email)) {
       await supabase.auth.signOut();
       setLoading(false);
       setError("Admin accounts cannot log in here. Please use the Admin Portal.");
       return;
     }
-    // Password verified — sign out and send OTP for 2FA
-    await supabase.auth.signOut();
-    const { error: otpError } = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: false } });
-    setLoading(false);
-    if (otpError) { setError(otpError.message); return; }
-    setStep("otp");
-    setCountdown(300);
-  };
-
-  const handleVerifyOtp = async () => {
-    setError("");
-    if (!otp) { setError("Please enter the OTP code."); return; }
-    setLoading(true);
-    const { error: err } = await verifyOTP(email, otp);
-    setLoading(false);
-    if (err) { setError(err.message); return; }
     window.location.href = "/";
   };
 
@@ -152,16 +123,10 @@ export default function Login() {
           </div>
 
           <div className="mb-10">
-            <h2 className="text-3xl font-bold text-white">
-              {step === "credentials" ? "Welcome back" : "Verify your identity"}
-            </h2>
-            <p className="text-white/40 text-sm mt-2">
-              {step === "credentials" ? "Sign in to your account" : `We sent a 6-digit code to ${email}`}
-            </p>
+            <h2 className="text-3xl font-bold text-white">Welcome back</h2>
+            <p className="text-white/40 text-sm mt-2">Sign in to your account</p>
           </div>
 
-          {step === "credentials" ? (
-            <>
           {/* EMAIL */}
           <div className="mb-4">
             <label className="text-xs text-white/40 uppercase tracking-widest font-medium mb-2 block">Email Address</label>
@@ -200,40 +165,6 @@ export default function Login() {
           <div className="flex justify-end mb-6">
             <Link href="/forgot-password" className="text-xs text-white/30 hover:text-[#c9a98a] transition">Forgot password?</Link>
           </div>
-            </>
-          ) : (
-            <div className="mb-6">
-              <label className="text-xs text-white/40 uppercase tracking-widest font-medium mb-2 block">OTP Code</label>
-              <div className="flex items-center bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 focus-within:border-[#c9a98a]/50 transition mb-2">
-                <FiShield className="text-white/30 mr-3 shrink-0" />
-                <input
-                  type="text"
-                  placeholder="Enter 6-digit code"
-                  maxLength={6}
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
-                  onKeyDown={(e) => e.key === "Enter" && handleVerifyOtp()}
-                  className="w-full bg-transparent text-white placeholder-white/20 text-sm outline-none tracking-[0.5em]"
-                  autoFocus
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <button onClick={() => { setStep("credentials"); setOtp(""); setError(""); }} className="text-xs text-white/30 hover:text-[#c9a98a] transition">← Back</button>
-                {countdown > 0 ? (
-                  <span className="text-xs text-white/30">Resend in {Math.floor(countdown / 60)}:{String(countdown % 60).padStart(2, "0")}</span>
-                ) : (
-                <button onClick={async () => {
-                    setError("");
-                    setLoading(true);
-                    const { error: otpError } = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: false } });
-                    setLoading(false);
-                    if (otpError) { setError(otpError.message); return; }
-                    setCountdown(300);
-                  }} disabled={loading} className="text-xs text-[#c9a98a] hover:text-[#b8956f] transition disabled:opacity-50">Resend OTP</button>
-                )}
-              </div>
-            </div>
-          )}
 
           {error && (
             <motion.div
@@ -246,7 +177,7 @@ export default function Login() {
           )}
 
           <button
-            onClick={step === "credentials" ? handleLogin : handleVerifyOtp}
+            onClick={handleLogin}
             disabled={loading}
             className="w-full flex items-center justify-center gap-3 bg-[#c9a98a] hover:bg-[#b8956f] text-black py-4 rounded-xl font-bold text-sm tracking-widest uppercase transition disabled:opacity-50 group"
           >
@@ -254,7 +185,7 @@ export default function Login() {
               <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
             ) : (
               <>
-                {step === "credentials" ? "Sign In" : "Verify & Login"}
+                Sign In
                 <FiArrowRight className="group-hover:translate-x-1 transition-transform" />
               </>
             )}
